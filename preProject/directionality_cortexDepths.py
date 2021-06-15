@@ -7,7 +7,7 @@ import timeit
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
 
-def directionality_cortexDepth(name_otsu, path, path_directionality, nbr_cortexDepths=5, patch_size=80, pixel=0.542):
+def directionality_cortexDepth(name_otsu, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -124,8 +124,8 @@ cortexDepths = 5
 patch_size = 20
 
 start = timeit.default_timer()
-corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality,
-                                                   nbr_cortexDepths = cortexDepths, patch_size=patch_size)
+corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality, patch_size=patch_size,
+                                                   nbr_cortexDepths = cortexDepths)
 plot_directionalityCorreted(corrected)
 plot_nbrPatchesInCortex(nbr)
 stop = timeit.default_timer()
