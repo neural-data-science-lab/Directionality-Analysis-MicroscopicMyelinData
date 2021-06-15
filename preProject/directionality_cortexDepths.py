@@ -7,7 +7,7 @@ import timeit
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
 
-def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, nbr_cortexDepths, patch_size=80, pixel = 0.542):
+def directionality_cortexDepth(name_otsu, path, path_directionality, nbr_cortexDepths=5, patch_size=80, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -24,16 +24,13 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
 
     returns dictionary d that contains the valid, corrected sums of orientations for specified cortex depths
     '''
-
-    path_otsu = os.path.join(path, name_otsu)
-    mask_otsu = io.imread(path_otsu)
     path_cortex = os.path.join(path, name_cortex)
     mask_cortex = io.imread(path_cortex)
-
-    # dimensionality of data
-    width = mask_otsu.shape[2]
-    height = mask_otsu.shape[1]
-    depth = mask_otsu.shape[0]
+    path_otsu = os.path.join(path, name_otsu)
+    mask_otsu = io.imread(path_otsu)
+    width = mask_cortex.shape[2]
+    height = mask_cortex.shape[1]
+    depth = mask_cortex.shape[0]
 
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
@@ -54,8 +51,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
         sobel_smooth = gaussian_filter(sobel, sigma=2)
         orientations.append(sobel_smooth) # angles
         distances.append(dists) # distances to cortex
-    layers = np.array([0,90,361,466,857])
-    max_dist = 1157/pixel  #layer IV: 857-1157 um; 750
+    layers = np.array([0,58.5,234.65,302.25,557.05])/pixel
+    max_dist = 752.05/pixel
 
     d = {}  # dict for corrected valid directionality frequencies
     n = {}  # dict to sample for the nbr of patches per cortex depth
@@ -74,8 +71,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
                 patch_otsu = mask_otsu[k, j * patch_size:j * patch_size + patch_size,
                              i * patch_size:i * patch_size + patch_size]
                 cortexDepth = distances[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-                if 255 in patch_otsu and cortexDepth <= max_dist: # removed = 8 due to cortexDepth <= max_dist
-                    key = int(cortexDepth / (max_dist / nbr_cortexDepths))
+                key = np.digitize(cortexDepth, layers, right=False) - 1
+                if 255 in patch_otsu and cortexDepth <= max_dist: #cortexDepth > 0 and cortexDepth <= max_dist:
                     angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                    int(i * patch_size + patch_size / 2)]
                     # get angle difference and rotate all orientations in patch
@@ -89,17 +86,17 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
                         idx = (np.abs(d[str(key)][:, 0] - patch_shifted['Direction'][row])).argmin()
                         d[str(key)][idx, 1] += patch_shifted['Slice_' + str(k + 1)][row]
                     n[str(key)] += 1
-    return d, n, max_dist/nbr_cortexDepths
+    return d, n
 
 # Plots
-def plot_directionalityCorreted(data, depth):
+def plot_directionalityCorreted(data):
+    labels = np.array(['I', 'II/III', 'IV', 'V', 'VI'])
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     for i in range(len(data)):
-        ax.plot(data[str(i)][:, 0], data[str(i)][:, 1], label='depth ' + str(i))
-    depth_um = depth*0.542
+        ax.plot(data[str(i)][:, 0], data[str(i)][:, 1], label='layer ' + labels[i])
     ax.set_ylabel('Frequency of direction', fontsize=18)
     ax.set_xlabel('Directions in angluar degrees', fontsize=18)
-    ax.set_title('Directionality of structures per cortex depth = '+str(int(depth_um)), fontsize=20)
+    ax.set_title('Directionality of structures per cortex depth', fontsize=20)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
     plt.legend(fontsize=14)
@@ -119,20 +116,19 @@ def plot_nbrPatchesInCortex(nbr):
 
 
 # main
-name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
 name_cortex = 'test_C00_binMask_cortex.tif'
 name_data = 'test_C03_smooth3D_bg95_sato.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
-path_directionality = 'test_C03_smooth3D_bg95_sato-dice80/directionalitySato_smoothBG80_'
+path_directionality = 'test_C03_smooth3D_bg95_sato_dice20/Sato_dice20_'
 cortexDepths = 5
-patch_size = 80
+patch_size = 20
 
 start = timeit.default_timer()
-corrected, nbr, depth = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality,
+corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality,
                                                    nbr_cortexDepths = cortexDepths, patch_size=patch_size)
-plot_directionalityCorreted(corrected, depth)
+plot_directionalityCorreted(corrected)
 plot_nbrPatchesInCortex(nbr)
 stop = timeit.default_timer()
 execution_time = stop - start
-print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #241.66 s
+print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #5060.08 seconds for 20x20
 
