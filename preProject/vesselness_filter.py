@@ -11,8 +11,8 @@ def normalize(image):
     max_val=np.max(image)
     return (image-min_val)/(max_val-min_val)
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
-name_data = 'ProbabilityMaps.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
+name_data = 'RightZ50_smooth2_bg95.tif'
 path_data = os.path.join(path, name_data)
 data = io.imread(path_data)
 
@@ -21,7 +21,7 @@ d = {}
 for z in range(data.shape[0]):
     d[str(z)] = sato(data[z], black_ridges = False)
 f = np.array([normalize(d[v]) for v in d.keys()])*255
-imsave(path+"test_C03_weka_sato.tif", f.astype('uint16'))
+imsave(path+"RightZ50_smooth2_bg95_sato.tif", f.astype('uint16'))
 stop = timeit.default_timer()
 execution_time = stop - start
 print("Program Executed in "+str(round(execution_time,2))+" seconds")

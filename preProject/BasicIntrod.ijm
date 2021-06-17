@@ -59,3 +59,32 @@ setAutoThreshold("Mean dark");
 setAutoThreshold("Otsu dark");
 run("Close");
 saveAs("Tiff", "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/Left_gaussian_bg95_otsu.tif");
+
+//16.06 for 50 slices 
+Stack.setXUnit("um");
+Stack.setYUnit("um");
+Stack.setZUnit("um");
+run("Properties...", "channels=1 slices=50 frames=1 pixel_width=0.542 pixel_height=0.542 voxel_depth=4");
+run("Select All");
+run("Save");
+run("Gaussian Blur...", "sigma=2 stack");
+run("Subtract Background...", "rolling=95 stack");
+//run("Brightness/Contrast...");
+run("Enhance Contrast", "saturated=0.35");
+run("Apply LUT", "stack");
+run("Close");
+saveAs("Tiff", "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/RightZ50_smooth2_bg95.tif");
+setAutoThreshold("Otsu dark");
+//run("Threshold...");
+setOption("BlackBackground", true);
+run("Convert to Mask", "method=Otsu background=Dark calculate black");
+run("Close");
+saveAs("Tiff", "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/RightZ50_smooth2_bg95_otsu.tif");
+
+// for cortex mask -> autofluorescence channel
+run("Duplicate...", "duplicate");
+run("Gaussian Blur...", "sigma=45 stack");
+run("Close");
+setAutoThreshold("Otsu dark");
+run("Convert to Mask", "method=Otsu background=Dark calculate black");
+run("Fill Holes", "stack"); 

@@ -2,10 +2,10 @@ from ij import IJ, Prefs
 from ij import WindowManager, ImagePlus
 from fiji.analyze.directionality import Directionality_
 
-filename = "test_C03_smooth3D_bg95_sato.tif"
-path = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/"
-outputpath = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/test_C03_smooth3D_bg95_sato_dice20/"
-name = "Sato_dice20_"
+filename = "RightZ50_smooth2_bg95_sato.tif"
+path = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/"
+outputpath = path+"RightZ50_smooth2_bg95_sato_dice20/"
+name = "rightDice20_"
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]
@@ -19,7 +19,6 @@ y_bound = height/20
 for i in range(x_bound):
 	for j in range(y_bound):
 		img2 = img.duplicate()
-		#img = IJ.openImage(path + filename)
 		k = i*20
 		l = j*20
 		img2.setRoi(k, l, 20, 20)

@@ -7,7 +7,7 @@ import timeit
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
 
-def directionality_cortexDepth(name_otsu, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
+def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -116,19 +116,20 @@ def plot_nbrPatchesInCortex(nbr):
 
 
 # main
-name_cortex = 'test_C00_binMask_cortex.tif'
-name_data = 'test_C03_smooth3D_bg95_sato.tif'
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
-path_directionality = 'test_C03_smooth3D_bg95_sato_dice20/Sato_dice20_'
+name_cortex = 'Right_AF_Z50_cortexMask.tif'
+name_data = 'RightZ50_smooth2_bg95_sato.tif'
+name_otsu = 'RightZ50_smooth2_bg95_otsu.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
+path_directionality = 'RightZ50_smooth2_bg95_sato_dice80/rightDice80_'
 cortexDepths = 5
-patch_size = 20
+patch_size = 80
 
 start = timeit.default_timer()
-corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality, patch_size=patch_size,
-                                                   nbr_cortexDepths = cortexDepths)
+corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
+                                            nbr_cortexDepths=5, pixel=0.542)
 plot_directionalityCorreted(corrected)
 plot_nbrPatchesInCortex(nbr)
 stop = timeit.default_timer()
 execution_time = stop - start
-print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #5060.08 seconds for 20x20
+print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #1642.25 seconds for 20x20
 
