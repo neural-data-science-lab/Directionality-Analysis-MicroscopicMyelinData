@@ -1,4 +1,6 @@
+import math
 import os
+import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,6 +8,7 @@ import skimage.io as io
 import timeit
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
+import json
 
 def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
     '''
@@ -89,14 +92,21 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     return d, n
 
 # Plots
-def plot_directionalityCorreted(data):
+def plot_directionalityCorreted(data, nbr, normalize = False):
     labels = np.array(['I', 'II/III', 'IV', 'V', 'VI'])
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
+    s = sum(nbr.values())
     for i in range(len(data)):
-        ax.plot(data[str(i)][:, 0], data[str(i)][:, 1], label='layer ' + labels[i])
+        if normalize:
+            title = 'Normalized directionality analysis'
+            freq = data[str(i)][:, 1] / (nbr[str(i)])
+        else:
+            freq = data[str(i)][:, 1]
+            title = 'Directionality analysis'
+        ax.plot(data[str(i)][:, 0],freq, label='layer ' + labels[i])
     ax.set_ylabel('Frequency of direction', fontsize=18)
     ax.set_xlabel('Directions in angluar degrees', fontsize=18)
-    ax.set_title('Directionality of structures per cortex depth', fontsize=20)
+    ax.set_title(title, fontsize=20)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
     plt.legend(fontsize=14)
@@ -109,27 +119,109 @@ def plot_nbrPatchesInCortex(nbr):
     ax.set_ylabel('# patches', fontsize=18)
     ax.set_xlabel('cortex depth', fontsize=18)
     ax.set_xticks(np.arange(0, len(nbr.keys()), 1))
-    ax.set_xticklabels(nbr.keys(), fontsize=14)
+    ax.set_xticklabels(np.array(['I', 'II/III', 'IV', 'V', 'VI']), fontsize=14)
     plt.yticks(fontsize=14)
     fig.tight_layout()
     plt.show()
 
+# Statistics
+def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0):
+    '''
+    function to obtain a statistics from the directionality analysis
+
+    name_otsu:              file name of the threshold mask, test_C03_smooth3D_bg95_otsu.tif
+    name_cortex:            file name of the cortex mask, test_C00_binMask_cortex.tif
+    path:                   path to  files
+    patch_directionality:   path to where the directionality calculation files lie
+    patch_size:             size of square patch on which the orientation was computed
+    slice:                  2D data; z-slice which is used for statistics
+
+    output of the function gives the i,j position of the respective patch, the angle of the correction towards the
+    cortex normals and mode
+    '''
+    path_otsu = os.path.join(path, name_otsu)
+    mask_otsu = io.imread(path_otsu)[slice]
+    path_cortex = os.path.join(path, name_cortex)
+    mask_cortex = io.imread(path_cortex)[slice]
+    width = mask_otsu.shape[1]
+    height = mask_otsu.shape[0]
+    file = path_directionality + str(0) + '_' + str(0) + '.csv'
+    path_data = os.path.join(path, file)
+    data = pd.read_csv(path_data)
+    data.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+    direction = pd.DataFrame(np.stack((data['Direction'], np.zeros(len(data['Direction']))), axis=1))
+    distances = ndimage.distance_transform_edt(mask_cortex, return_distances=True)
+    sx = ndimage.sobel(distances, axis=0, mode='nearest')
+    sy = ndimage.sobel(distances, axis=1, mode='nearest')
+    sobel = np.arctan2(sy, sx) * 180 / np.pi
+    orientations = gaussian_filter(sobel, sigma=2)
+    max_dist = 752.05 / 0.542
+
+    d = []
+    for i in range(int(width/patch_size)):
+        for j in range(int(height/patch_size)):
+            filename = path_directionality + str(i)+'_'+str(j)+'.csv'
+            path_patch = os.path.join(path, filename)
+            patch = pd.read_csv(path_patch)
+            patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+            patch_otsu = mask_otsu[j*patch_size:j*patch_size+patch_size,i*patch_size:i*patch_size+patch_size]
+            cortexDepth = distances[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
+            if 255 in patch_otsu and cortexDepth <= max_dist:
+                angle_cortex = orientations[int(j * patch_size + patch_size/2), int(i * patch_size + patch_size/2)]
+                correction = 90-angle_cortex
+                direction_corrected = patch['Direction']-correction
+                patch_shifted = pd.concat([direction_corrected, patch['Slice_'+str(slice+1)]], axis=1)
+                patch_shifted['Direction'].loc[patch_shifted['Direction'] < -90] += 180
+                patch_shifted['Direction'].loc[patch_shifted['Direction'] > 90] -= 180
+                summary = np.copy(direction)
+                for row in range(len(patch_shifted)):
+                    idx = (np.abs(summary[:,0] - patch_shifted['Direction'][row])).argmin()
+                    summary[idx,1] = patch_shifted['Slice_'+str(slice+1)][row]
+                summary[:,0] = np.radians(summary[:, 0] / math.pi)
+                stats = np.array([i, j, correction, summary[summary[:,1].argmax(),0]])
+                d.append(stats)
+    return d
+
+def plot_Statistics(name_data, path, statistics, slice=0):
+    path_data = os.path.join(path, name_data)
+    data = io.imread(path_data)[slice]
+    stats = pd.DataFrame(statistics)
+    X = stats[0] * patch_size + patch_size / 2
+    Y = stats[1] * patch_size + patch_size / 2
+    angles = stats[2] + np.degrees(stats[3] * math.pi)
+    U = np.cos(angles * np.pi / 180)
+    V = np.sin(angles * np.pi / 180)
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
+    ax.imshow(data, cmap="gray")
+    ax.quiver(X, Y, U, V, color='red', units='xy')
+    plt.show()
 
 # main
 name_cortex = 'Right_AF_Z50_cortexMask.tif'
 name_data = 'RightZ50_smooth2_bg95_sato.tif'
-name_otsu = 'RightZ50_smooth2_bg95_otsu.tif'
+name_otsu = 'RightZ50_smooth2_bg95_otsu-1.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
-path_directionality = 'RightZ50_smooth2_bg95_sato_dice80/rightDice80_'
+folder_directionality = 'RightZ50_smooth2_bg95_sato_dice80/'
+name_directionality = 'rightDice80_'
+path_directionality = folder_directionality + name_directionality
 cortexDepths = 5
 patch_size = 80
 
 start = timeit.default_timer()
 corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-plot_directionalityCorreted(corrected)
+pickle.dump( corrected, open(path + folder_directionality + "corrected.pkl", "wb"))
+json.dump( nbr, open(path + folder_directionality + "nbr.json", 'w'))
+plot_directionalityCorreted(corrected, nbr, normalize = True)
+plot_directionalityCorreted(corrected, nbr, normalize = False)
 plot_nbrPatchesInCortex(nbr)
+stats = statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0)
+plot_Statistics(name_data, path, stats, slice=0)
 stop = timeit.default_timer()
 execution_time = stop - start
 print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #1642.25 seconds for 20x20
+
+# read
+#corrected = pickle.load(open(path + "corrected.pkl", "rb"))
+#nbr = open(path + "nbr.json", "r").read()
 

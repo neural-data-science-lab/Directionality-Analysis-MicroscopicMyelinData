@@ -79,6 +79,7 @@ setAutoThreshold("Otsu dark");
 setOption("BlackBackground", true);
 run("Convert to Mask", "method=Otsu background=Dark calculate black");
 run("Close");
+run("Open", "stack");
 saveAs("Tiff", "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/RightZ50_smooth2_bg95_otsu.tif");
 
 // for cortex mask -> autofluorescence channel
