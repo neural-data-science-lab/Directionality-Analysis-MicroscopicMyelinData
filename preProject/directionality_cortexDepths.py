@@ -42,20 +42,16 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     patch0.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
     direction = pd.DataFrame(np.stack((patch0['Direction'], np.zeros(len(patch0['Direction']))), axis=1))
 
-    distances = []
     orientations = []
+    dists3D = ndimage.distance_transform_edt(mask_cortex, sampling=[8,1,1], return_distances=True)
     for z in range(depth):
-        slice = mask_cortex[z]
-        dists = ndimage.distance_transform_edt(slice, return_distances=True)
-        sx = ndimage.sobel(dists, axis=0, mode='nearest')
-        sy = ndimage.sobel(dists, axis=1, mode='nearest')
+        sx = ndimage.sobel(dists3D[z], axis=0, mode='nearest')
+        sy = ndimage.sobel(dists3D[z], axis=1, mode='nearest')
         sobel = np.arctan2(sy, sx) * 180 / np.pi
-        # smooth sobel
         sobel_smooth = gaussian_filter(sobel, sigma=2)
         orientations.append(sobel_smooth) # angles
-        distances.append(dists) # distances to cortex
-    layers = np.array([0,58.5,234.65,302.25,557.05])/pixel
-    max_dist = 752.05/pixel
+    layers = np.array([0,58,235,302,557])/pixel
+    max_dist = 752/pixel
 
     d = {}  # dict for corrected valid directionality frequencies
     n = {}  # dict to sample for the nbr of patches per cortex depth
@@ -73,7 +69,7 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
             for k in range(depth):
                 patch_otsu = mask_otsu[k, j * patch_size:j * patch_size + patch_size,
                              i * patch_size:i * patch_size + patch_size]
-                cortexDepth = distances[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
+                cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
                 key = np.digitize(cortexDepth, layers, right=False) - 1
                 if 255 in patch_otsu and cortexDepth <= max_dist: #cortexDepth > 0 and cortexDepth <= max_dist:
                     angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
@@ -199,7 +195,7 @@ def plot_Statistics(name_data, path, statistics, slice=0):
 # main
 name_cortex = 'Right_AF_Z50_cortexMask.tif'
 name_data = 'RightZ50_smooth2_bg95_sato.tif'
-name_otsu = 'RightZ50_smooth2_bg95_otsu-1.tif'
+name_otsu = 'RightZ50_smooth2_bg95_otsu.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
 folder_directionality = 'RightZ50_smooth2_bg95_sato_dice80/'
 name_directionality = 'rightDice80_'
