@@ -7,11 +7,11 @@ import timeit
 import math
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
-from scipy.stats import circmean, circvar, circstd, mode
-from skimage.io import imsave
+from scipy.stats import circmean, circvar, circstd
 
 
-def rotate_directionality(name_otsu, name_cortex, path, path_directionality, patch_size=80, statistics=True, z_slice=0):
+def rotate_directionality(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542,
+                          statistics=True, z_slice=0):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -49,20 +49,26 @@ def rotate_directionality(name_otsu, name_cortex, path, path_directionality, pat
 
     d = {}  # dict for corrected valid directionality frequencies
     uncorrected = {}  # dict for uncorrected valid directionality frequencies
+    n = {}  # dict to sample for the nbr of patches per cortex depth
+    for nbr in range(nbr_cortexDepths):
+        d[str(nbr)] = np.copy(direction)
+        uncorrected[str(nbr)] = np.copy(direction)
+        n[str(nbr)] = 0
 
+    distances = []
     orientations = []
     for z in range(depth):
-        d[str(z)] = np.copy(direction)
-        uncorrected[str(z)] = np.copy(direction)
-        # calculate gradient filter over distance transform per z-slice
         slice = mask_cortex[z]
-        distances = ndimage.distance_transform_edt(slice, return_distances=True)
-        sx = ndimage.sobel(distances, axis=0, mode='nearest')
-        sy = ndimage.sobel(distances, axis=1, mode='nearest')
+        dists = ndimage.distance_transform_edt(slice, return_distances=True)
+        sx = ndimage.sobel(dists, axis=0, mode='nearest')
+        sy = ndimage.sobel(dists, axis=1, mode='nearest')
         sobel = np.arctan2(sy, sx) * 180 / np.pi
         # smooth sobel
         sobel_smooth = gaussian_filter(sobel, sigma=2)
-        orientations.append(sobel_smooth)
+        orientations.append(sobel_smooth)  # angles
+        distances.append(dists)  # distances to cortex
+    layers = np.array([0, 58.5, 234.65, 302.25, 557.05]) / pixel
+    max_dist = 752.05 / pixel
 
     if statistics == True:
         # s = {}  # dict for the statistics if statistics is required for all z-slices
@@ -80,8 +86,10 @@ def rotate_directionality(name_otsu, name_cortex, path, path_directionality, pat
             for k in range(depth):
                 patch_otsu = mask_otsu[k, j * patch_size:j * patch_size + patch_size,
                              i * patch_size:i * patch_size + patch_size]
-                if 255 in patch_otsu:
-                    uncorrected[str(k)][:, 1] += patch['Slice_' + str(k + 1)]
+                cortexDepth = distances[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
+                key = np.digitize(cortexDepth, layers, right=False) - 1
+                if 255 in patch_otsu and cortexDepth <= max_dist:
+                    uncorrected[str(key)][:, 1] += patch['Slice_' + str(k + 1)]
                     # rotate orientations according to cortex curvature
                     angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                    int(i * patch_size + patch_size / 2)]  # middle point of box
@@ -95,9 +103,10 @@ def rotate_directionality(name_otsu, name_cortex, path, path_directionality, pat
                     summary = np.copy(direction)
                     summary_u = np.stack((patch0['Direction'], patch['Slice_' + str(k + 1)]), axis=1)
                     for row in range(len(patch_shifted)):
-                        idx = (np.abs(d[str(k)][:, 0] - patch_shifted['Direction'][row])).argmin()  # nearest value in directions
-                        d[str(k)][idx, 1] += patch_shifted['Slice_' + str(k + 1)][row]
+                        idx = (np.abs(d[str(key)][:, 0] - patch_shifted['Direction'][row])).argmin()  # nearest value in directions
+                        d[str(key)][idx, 1] += patch_shifted['Slice_' + str(k + 1)][row]
                         summary[idx, 1] = patch_shifted['Slice_' + str(k + 1)][row]
+                    n[str(key)] += 1
 
                     if (statistics == True) and (k == z_slice):
                         summary[:, 0] = np.radians(summary[:, 0] / math.pi)
@@ -110,23 +119,31 @@ def rotate_directionality(name_otsu, name_cortex, path, path_directionality, pat
                             [i, j, 0, summary_u[summary_u[:,1].argmax(),0],
                              round(circvar(summary_u[:, 0] * summary_u[:, 1], high=np.pi, low=-np.pi), 5),
                              round(circstd(summary_u[:, 0] * summary_u[:, 1], high=np.pi, low=-np.pi), 5)])
-                        # round(circmean(summary_u[:, 0] * summary_u[:, 1], high=np.pi, low=-np.pi), 5) or round(mode(summary[:, 0] * summary[:, 1])[0][0], 5)
                         # s[str(k)].append(stats)
                         s.append(stats)
                         u.append(stats_u)
-    return d, uncorrected, s, u
+    return d, uncorrected, s, u, n
 
 
 # Plots
-def plot_directionalityCorreted(data):
+def plot_directionalityCorreted(data, nbr, normalize = True):
+    labels = np.array(['I', 'II/III', 'IV', 'V', 'VI'])
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
+    s = sum(nbr.values())
     for i in range(len(data)):
-        ax.plot(data[str(i)][:, 0], data[str(i)][:, 1], label='slice ' + str(i))
+        if normalize:
+            title = 'Normalized directionality analysis'
+            freq = data[str(i)][:, 1] / (nbr[str(i)])
+        else:
+            freq = data[str(i)][:, 1]
+            title = 'Directionality analysis'
+        ax.plot(data[str(i)][:, 0],freq, label='layer ' + labels[i])
     ax.set_ylabel('Frequency of direction', fontsize=18)
     ax.set_xlabel('Directions in angluar degrees', fontsize=18)
-    ax.set_title('Directionality of structures in degrees', fontsize=20)
+    ax.set_title(title, fontsize=20)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
+    plt.legend(fontsize=14)
     fig.tight_layout()
     plt.show()
 
@@ -143,7 +160,17 @@ def plot_directionalityStatistics(name_data, path, statistics, slice=0):
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     ax.imshow(data, cmap="gray")
     ax.quiver(X, Y, U, V, color='red', units='xy')
-    # ax.plot(np.array(X), np.array(Y), 'ro', markersize = 2)
+    plt.show()
+
+def plot_nbrPatchesInCortex(nbr):
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
+    ax.bar(np.arange(0, len(nbr.keys()), 1), nbr.values())
+    ax.set_ylabel('# patches', fontsize=18)
+    ax.set_xlabel('cortex depth', fontsize=18)
+    ax.set_xticks(np.arange(0, len(nbr.keys()), 1))
+    ax.set_xticklabels(np.array(['I', 'II/III', 'IV', 'V', 'VI']), fontsize=14)
+    plt.yticks(fontsize=14)
+    fig.tight_layout()
     plt.show()
 
 
@@ -152,16 +179,18 @@ name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
 name_cortex = 'test_C00_binMask_cortex.tif'
 name_data = 'test_C03_smooth3D_bg95_sato.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
-path_directionality = 'test_C03_smooth3D_bg95_sato_dice20/Sato_dice20_'
-patch_size = 20
+path_directionality = 'test_C03_smooth3D_bg95_sato-dice80/directionalitySato_smoothBG80_'
+patch_size = 80
 
 start = timeit.default_timer()
-corrected, uncorrected, stats_corr, stats_uncorr = rotate_directionality(name_otsu, name_cortex, path, path_directionality,
-                                                                         patch_size=20, statistics=True, z_slice=0)
-plot_directionalityCorreted(corrected)
-plot_directionalityCorreted(uncorrected)
+corrected, uncorrected, stats_corr, stats_uncorr, nbr = \
+    rotate_directionality(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5,
+                          pixel=0.542,statistics=True, z_slice=0)
+plot_directionalityCorreted(corrected, nbr, normalize = True)
+plot_directionalityCorreted(uncorrected, nbr, normalize = True)
 plot_directionalityStatistics(name_data, path, stats_corr, slice=0)
 plot_directionalityStatistics(name_data, path, stats_uncorr, slice=0)
+plot_nbrPatchesInCortex(nbr)
 stop = timeit.default_timer()
 execution_time = stop - start
 print("Program Executed in " + str(round(execution_time, 2)) + " seconds")
