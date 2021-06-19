@@ -178,7 +178,7 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
                 d.append(stats)
     return d
 
-def plot_Statistics(name_data, path, statistics, slice=0):
+def plot_Statistics(name_data, path, statistics, patch_size, slice=0):
     path_data = os.path.join(path, name_data)
     data = io.imread(path_data)[slice]
     stats = pd.DataFrame(statistics)
@@ -212,7 +212,7 @@ plot_directionalityCorreted(corrected, nbr, normalize = True)
 plot_directionalityCorreted(corrected, nbr, normalize = False)
 plot_nbrPatchesInCortex(nbr)
 stats = statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0)
-plot_Statistics(name_data, path, stats, slice=0)
+plot_Statistics(name_data, path, stats, patch_size, slice=0)
 stop = timeit.default_timer()
 execution_time = stop - start
 print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #1642.25 seconds for 20x20
