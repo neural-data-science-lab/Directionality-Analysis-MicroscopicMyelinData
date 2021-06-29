@@ -50,8 +50,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
         sobel = np.arctan2(sy, sx) * 180 / np.pi
         sobel_smooth = gaussian_filter(sobel, sigma=2)
         orientations.append(sobel_smooth) # angles
-    layers = np.array([0,58,235,302,557])/pixel
-    max_dist = 752/pixel
+    layers = np.array([0,60,235,300,560])/pixel
+    max_dist = 750/pixel
 
     d = {}  # dict for corrected valid directionality frequencies
     n = {}  # dict to sample for the nbr of patches per cortex depth
@@ -88,7 +88,7 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     return d, n
 
 # Plots
-def plot_directionalityCorreted(data, nbr, normalize = False):
+def plot_directionalityCorreted(data, nbr, save_path, normalize = False):
     labels = np.array(['I', 'II/III', 'IV', 'V', 'VI'])
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     s = sum(nbr.values())
@@ -96,9 +96,11 @@ def plot_directionalityCorreted(data, nbr, normalize = False):
         if normalize:
             title = 'Normalized directionality analysis'
             freq = data[str(i)][:, 1] / (nbr[str(i)])
+            name =  'Directionality_norm.png'
         else:
             freq = data[str(i)][:, 1]
             title = 'Directionality analysis'
+            name =  'Directionality.png'
         ax.plot(data[str(i)][:, 0],freq, label='layer ' + labels[i])
     ax.set_ylabel('Frequency of direction', fontsize=18)
     ax.set_xlabel('Directions in angluar degrees', fontsize=18)
@@ -107,9 +109,10 @@ def plot_directionalityCorreted(data, nbr, normalize = False):
     plt.yticks(fontsize=14)
     plt.legend(fontsize=14)
     fig.tight_layout()
-    plt.show()
+    # save figure
+    plt.savefig(save_path+name, dpi = 200)
 
-def plot_nbrPatchesInCortex(nbr):
+def plot_nbrPatchesInCortex(nbr, save_path):
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     ax.bar(np.arange(0, len(nbr.keys()), 1), nbr.values())
     ax.set_ylabel('# patches', fontsize=18)
@@ -118,7 +121,8 @@ def plot_nbrPatchesInCortex(nbr):
     ax.set_xticklabels(np.array(['I', 'II/III', 'IV', 'V', 'VI']), fontsize=14)
     plt.yticks(fontsize=14)
     fig.tight_layout()
-    plt.show()
+    # save figure
+    plt.savefig(save_path + 'nbrPatches.png', dpi=200)
 
 # Statistics
 def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0):
@@ -178,7 +182,7 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
                 d.append(stats)
     return d
 
-def plot_Statistics(name_data, path, statistics, patch_size, slice=0):
+def plot_Statistics(name_data, path, statistics, patch_size, save_path, slice=0):
     path_data = os.path.join(path, name_data)
     data = io.imread(path_data)[slice]
     stats = pd.DataFrame(statistics)
@@ -190,32 +194,35 @@ def plot_Statistics(name_data, path, statistics, patch_size, slice=0):
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     ax.imshow(data, cmap="gray")
     ax.quiver(X, Y, U, V, color='red', units='xy')
-    plt.show()
+    # save figure
+    plt.savefig(save_path + 'Statistics_'+slice+'.png', dpi=200)
 
 # main
-name_cortex = 'Right_AF_Z50_cortexMask.tif'
-name_data = 'RightZ50_smooth2_bg95_sato.tif'
-name_otsu = 'RightZ50_smooth2_bg95_otsu.tif'
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
-folder_directionality = 'RightZ50_smooth2_bg95_sato_dice80/'
-name_directionality = 'rightDice80_'
+side = 'Left'
+name_cortex = side + 'cortex.tif'
+name_data = side + '_smooth2_bg95_frangi.tif'
+name_otsu = side + '_smooth2_bg95_otsu.tif'
+path = '/media/muellerg/Data SSD/Gesine/Data/'
+folder_directionality = side + '_frangi_dice80/'
+name_directionality = side + '_dice80_'
 path_directionality = folder_directionality + name_directionality
 cortexDepths = 5
 patch_size = 80
+save_path = path+folder_directionality
 
 start = timeit.default_timer()
 corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-pickle.dump( corrected, open(path + folder_directionality + "corrected.pkl", "wb"))
-json.dump( nbr, open(path + folder_directionality + "nbr.json", 'w'))
-plot_directionalityCorreted(corrected, nbr, normalize = True)
-plot_directionalityCorreted(corrected, nbr, normalize = False)
-plot_nbrPatchesInCortex(nbr)
-stats = statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0)
-plot_Statistics(name_data, path, stats, patch_size, slice=0)
+pickle.dump( corrected, open(path + folder_directionality + 'corrected.pkl', 'wb'))
+json.dump( nbr, open(path + folder_directionality + 'nbr.json', 'w'))
+plot_directionalityCorreted(corrected, nbr, save_path, normalize = True)
+plot_directionalityCorreted(corrected, nbr, save_path, normalize = False)
+plot_nbrPatchesInCortex(nbr, save_path)
+#stats = statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice = 0)
+#plot_Statistics(name_data, path, stats, patch_size, save_path, slice=0)
 stop = timeit.default_timer()
 execution_time = stop - start
-print("Program Executed in " + str(round(execution_time, 2)) + " seconds") #1642.25 seconds for 20x20
+print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds') #1642.25 seconds for 20x20
 
 # read
 #corrected = pickle.load(open(path + "corrected.pkl", "rb"))
