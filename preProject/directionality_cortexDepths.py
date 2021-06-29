@@ -200,7 +200,7 @@ def plot_Statistics(name_data, path, statistics, patch_size, save_path, slice=0)
 # main
 side = 'Left'
 patch_size = 80
-name_cortex = side + 'cortex.tif'
+name_cortex = side + '_cortex.tif'
 name_data = side + '50_smooth2_bg95.tif'
 name_otsu = side + '_smooth2_bg95_otsu.tif'
 path = '/media/muellerg/Data SSD/Gesine/Data/'
