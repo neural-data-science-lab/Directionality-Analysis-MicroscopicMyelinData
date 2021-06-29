@@ -2,26 +2,28 @@ from ij import IJ, Prefs
 from ij import WindowManager, ImagePlus
 from fiji.analyze.directionality import Directionality_
 
-filename = "RightZ50_smooth2_bg95_sato.tif"
-path = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/"
-outputpath = path+"RightZ50_smooth2_bg95_sato_dice20/"
-name = "rightDice20_"
+side = 'Left'
+patch_size = 80
+filename = side+'50_smooth2_bg95_frangi.tif'
+path = '/media/muellerg/Data SSD/Gesine/Data/'
+outputpath = path+side+'_frangiTest_'+str(patch_size)+'/'
+name = side+str(patch_size)
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]
 height = img.getDimensions()[1]
-if ( (width % 20) != 0  ): print("Adjust patch size.")
-if ( (height % 20) != 0  ): print("Adjust patch size.")
-x_bound = width/20
-y_bound = height/20
+if ( (width % patch_size) != 0  ): print("Adjust patch size.")
+if ( (height % patch_size) != 0  ): print("Adjust patch size.")
+x_bound = width/patch_size
+y_bound = height/patch_size
 
 #create patches and run directionality on them
 for i in range(x_bound):
 	for j in range(y_bound):
 		img2 = img.duplicate()
-		k = i*20
-		l = j*20
-		img2.setRoi(k, l, 20, 20)
+		k = i*patch_size
+		l = j*patch_size
+		img2.setRoi(k, l, patch_size, patch_size)
 		IJ.run(img2, "Crop", "")
 		dir = Directionality_()
 		dir.setImagePlus(img2)
