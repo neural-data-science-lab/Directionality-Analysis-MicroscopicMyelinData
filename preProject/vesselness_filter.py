@@ -11,22 +11,22 @@ def normalize(image):
     max_val=np.max(image)
     return (image-min_val)/(max_val-min_val)
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Datensatz-0705/'
-name_data = 'RightZ50_smooth2_bg95.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/'
+name_data = 'C03_smooth2_bg95.tif'
 path_data = os.path.join(path, name_data)
 data = io.imread(path_data)
 
 start = timeit.default_timer()
-d = {}
-for z in range(data.shape[0]):
-    d[str(z)] = sato(data[z], black_ridges = False)
-f = np.array([normalize(d[v]) for v in d.keys()])*255
-imsave(path+"RightZ50_smooth2_bg95_sato.tif", f.astype('uint16'))
+vesselness = np.zeros((2, data.shape[1],  data.shape[2]))
+for z in range(2):
+    f = frangi(data[z], black_ridges = False)
+    vesselness[z,:,:] = normalize(f)*255
+imsave(path+name_data+"_frangi.tif", vesselness.astype('uint16'))
 stop = timeit.default_timer()
 execution_time = stop - start
 print("Program Executed in "+str(round(execution_time,2))+" seconds")
 
-# Plot results for one slice
+''''# Plot results for one slice
 slice = 0
 fig, ax = plt.subplots(figsize=(10, 10), dpi=180, ncols=2, nrows=2)
 ax[0,0].imshow(data[slice], cmap="gray")
@@ -39,3 +39,4 @@ ax[1,1].imshow(sato(data[slice], black_ridges = False), cmap="gray")
 ax[1,1].set_title('Sato filter result')
 fig.tight_layout()
 plt.show()
+'''

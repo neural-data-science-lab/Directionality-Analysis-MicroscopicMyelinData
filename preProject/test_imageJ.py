@@ -1,5 +1,5 @@
 import imagej
-ij = imagej.init('sc.fiji:fiji', headless=False) #'C:/Users/Gesine/Downloads/Fiji.app'; 'net.imagej:imagej+net.imagej:imagej-legacy'
+ij = imagej.init(headless=False) #'C:/Users/Gesine/Downloads/Fiji.app'; 'net.imagej:imagej+net.imagej:imagej-legacy'
 
 from jnius import autoclass
 autoclass('java.lang.System').out.println('Hello world')
