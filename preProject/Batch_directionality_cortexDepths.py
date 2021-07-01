@@ -9,7 +9,7 @@ import timeit
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
 import json
-
+import psutil
 
 def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
     '''
@@ -35,6 +35,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     width = mask_cortex.shape[2]
     height = mask_cortex.shape[1]
     depth = mask_cortex.shape[0]
+    #print(psutil.virtual_memory())
+    #print('0x001')
 
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
@@ -43,49 +45,56 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     patch0.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
     direction = pd.DataFrame(np.stack((patch0['Direction'], np.zeros(len(patch0['Direction']))), axis=1))
 
-    orientations = []
-    dists3D = ndimage.distance_transform_edt(mask_cortex, sampling=[8,1,1], return_distances=True)
-    for z in range(depth):
-        sx = ndimage.sobel(dists3D[z], axis=0, mode='nearest')
-        sy = ndimage.sobel(dists3D[z], axis=1, mode='nearest')
-        sobel = np.arctan2(sy, sx) * 180 / np.pi
-        sobel_smooth = gaussian_filter(sobel, sigma=2)
-        orientations.append(sobel_smooth) # angles
-    layers = np.array([0,60,235,300,560])/pixel
-    max_dist = 750/pixel
-
     d = {}  # dict for corrected valid directionality frequencies
     n = {}  # dict to sample for the nbr of patches per cortex depth
     for nbr in range(nbr_cortexDepths):
         d[str(nbr)] = np.copy(direction)
         n[str(nbr)] = 0
+    #print(psutil.virtual_memory())
+    #print('0x002')
 
-    for i in range(int(width / patch_size)):
-        for j in range(int(height / patch_size)):
-            filename = path_directionality + str(i) + '_' + str(j) + '.csv'
-            path_patch = os.path.join(path, filename)
-            patch = pd.read_csv(path_patch)
-            patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+    batch_size = 50
+    for batch in range(0, int(depth/batch_size)):
+        orientations = []
+        dists3D = ndimage.distance_transform_edt(mask_cortex[batch*batch_size:batch*batch_size+batch_size,:,:], sampling=[8,1,1], return_distances=True)
+        #print(psutil.virtual_memory())
+        #print('0x003')
+        for z in range(batch_size):
+            sx = ndimage.sobel(dists3D[z], axis=0, mode='nearest')
+            sy = ndimage.sobel(dists3D[z], axis=1, mode='nearest')
+            sobel = np.arctan2(sy, sx) * 180 / np.pi
+            sobel_smooth = gaussian_filter(sobel, sigma=2)
+            orientations.append(sobel_smooth) # angles
+        layers = np.array([0,60,235,300,560])/pixel
+        max_dist = 750/pixel
 
-            for k in range(depth):
-                patch_otsu = mask_otsu[k, j * patch_size:j * patch_size + patch_size,
-                             i * patch_size:i * patch_size + patch_size]
-                cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-                key = np.digitize(cortexDepth, layers, right=False) - 1
-                if 255 in patch_otsu and cortexDepth <= max_dist: #cortexDepth > 0 and cortexDepth <= max_dist:
-                    angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
-                                                   int(i * patch_size + patch_size / 2)]
-                    # get angle difference and rotate all orientations in patch
-                    correction = 90 - angle_cortex
-                    direction_corrected = patch['Direction'] - correction
-                    # shift angles < -90 and > 90 degrees back into -90 to 90 range
-                    patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(k + 1)]], axis=1)
-                    patch_shifted['Direction'].loc[patch_shifted['Direction'] < -90] += 180
-                    patch_shifted['Direction'].loc[patch_shifted['Direction'] > 90] -= 180
-                    for row in range(len(patch_shifted)):
-                        idx = (np.abs(d[str(key)][:, 0] - patch_shifted['Direction'][row])).argmin()
-                        d[str(key)][idx, 1] += patch_shifted['Slice_' + str(k + 1)][row]
-                    n[str(key)] += 1
+        for i in range(int(width / patch_size)):
+            for j in range(int(height / patch_size)):
+                filename = path_directionality + str(i) + '_' + str(j) + '.csv'
+                path_patch = os.path.join(path, filename)
+                patch = pd.read_csv(path_patch)
+                patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+
+                x = np.arange(batch * batch_size, batch * batch_size + batch_size, 1)
+                for k, v in enumerate(x):
+                    patch_otsu = mask_otsu[v, j * patch_size:j * patch_size + patch_size,
+                                 i * patch_size:i * patch_size + patch_size]
+                    cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
+                    key = np.digitize(cortexDepth, layers, right=False) - 1
+                    if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(np.sum(patch['Slice_' + str(v + 1)])) != True: #cortexDepth > 0 and cortexDepth <= max_dist, check for nan in array:
+                        angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
+                                                       int(i * patch_size + patch_size / 2)]
+                        # get angle difference and rotate all orientations in patch
+                        correction = 90 - angle_cortex
+                        direction_corrected = patch['Direction'] - correction
+                        # shift angles < -90 and > 90 degrees back into -90 to 90 range
+                        patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(v + 1)]], axis=1)
+                        patch_shifted['Direction'].loc[patch_shifted['Direction'] < -90] += 180
+                        patch_shifted['Direction'].loc[patch_shifted['Direction'] > 90] -= 180
+                        for row in range(len(patch_shifted)):
+                            idx = (np.abs(d[str(key)][:, 0] - patch_shifted['Direction'][row])).argmin()
+                            d[str(key)][idx, 1] += patch_shifted['Slice_' + str(v + 1)][row]
+                        n[str(key)] += 1
     return d, n
 
 # Plots
@@ -149,7 +158,7 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
     path_data = os.path.join(path, file)
     data = pd.read_csv(path_data)
-    data.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+    data.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
     direction = pd.DataFrame(np.stack((data['Direction'], np.zeros(len(data['Direction']))), axis=1))
     distances = ndimage.distance_transform_edt(mask_cortex, return_distances=True)
     sx = ndimage.sobel(distances, axis=0, mode='nearest')
@@ -164,7 +173,7 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
             filename = path_directionality + str(i)+'_'+str(j)+'.csv'
             path_patch = os.path.join(path, filename)
             patch = pd.read_csv(path_patch)
-            patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+            patch.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
             patch_otsu = mask_otsu[j*patch_size:j*patch_size+patch_size,i*patch_size:i*patch_size+patch_size]
             cortexDepth = distances[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
             if 255 in patch_otsu and cortexDepth <= max_dist:
@@ -214,8 +223,9 @@ save_path = path+folder_directionality
 start = timeit.default_timer()
 corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-pickle.dump( corrected, open(path + folder_directionality + 'corrected.pkl', 'wb'))
-json.dump( nbr, open(path + folder_directionality + 'nbr.json', 'w'))
+pickle.dump( corrected, open(path + '/' + folder_directionality + 'corrected.pkl', 'wb'))
+json.dump( nbr, open(path + '/' + folder_directionality + 'nbr.json', 'w'))
+
 plot_directionalityCorreted(corrected, nbr, save_path, normalize = True)
 plot_directionalityCorreted(corrected, nbr, save_path, normalize = False)
 plot_nbrPatchesInCortex(nbr, save_path)
@@ -228,4 +238,3 @@ print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds') #1642
 # read
 #corrected = pickle.load(open(path + "corrected.pkl", "rb"))
 #nbr = open(path + "nbr.json", "r").read()
-
