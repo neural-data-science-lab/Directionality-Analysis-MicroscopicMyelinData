@@ -163,8 +163,6 @@ def statistics(name_cortex, path, path_directionality, patch_size, slice=0):
             path_patch = os.path.join(path, filename)
             patch = pd.read_csv(path_patch)
             patch.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
-            patch_otsu = mask_otsu[j * patch_size:j * patch_size + patch_size,
-                         i * patch_size:i * patch_size + patch_size]
             cortexDepth = distances[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
             if cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(slice + 1)])) == False:
                 angle_cortex = orientations[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
@@ -213,10 +211,10 @@ cortexDepths = 5
 save_path = path + folder_directionality
 
 start = timeit.default_timer()
-corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
+corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-pickle.dump(corrected, open(path + '/' + folder_directionality + 'corrected-Otsu.pkl', 'wb'))
-json.dump(nbr, open(path + '/' + folder_directionality + 'nbr-Otsu.json', 'w'))
+pickle.dump( corrected, open(path + '/' + folder_directionality + 'corrected-Otsu.pkl', 'wb'))
+json.dump( nbr, open(path + '/' + folder_directionality + 'nbr-Otsu.json', 'w'))
 
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = True)
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = False)
