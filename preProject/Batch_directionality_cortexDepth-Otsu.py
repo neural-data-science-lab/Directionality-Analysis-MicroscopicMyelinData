@@ -12,8 +12,7 @@ import json
 import psutil
 
 
-def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5,
-                               pixel=0.542):
+def directionality_cortexDepth(name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -21,7 +20,6 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     (Gradient filter over distance transform)
     3. sum over all patches with a certain cortex depth
 
-    name_otsu:              file name of the threshold mask, test_C03_smooth3D_bg95_otsu.tif -> valid patches
     name_cortex:            file name of the cortex mask, test_C00_binMask_cortex.tif -> cortex curvature
     path:                   path to  files
     patch_directionality:   path to where the directionality calculation files lie
@@ -32,8 +30,6 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     '''
     path_cortex = os.path.join(path, name_cortex)
     mask_cortex = io.imread(path_cortex)
-    path_otsu = os.path.join(path, name_otsu)
-    mask_otsu = io.imread(path_otsu)
     width = mask_cortex.shape[2]
     height = mask_cortex.shape[1]
     depth = mask_cortex.shape[0]
@@ -73,12 +69,9 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
 
                 x = np.arange(batch * batch_size, batch * batch_size + batch_size, 1)
                 for k, v in enumerate(x):
-                    patch_otsu = mask_otsu[v, j * patch_size:j * patch_size + patch_size,
-                                 i * patch_size:i * patch_size + patch_size]
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
                     key = np.digitize(cortexDepth, layers, right=False)
-                    if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(
-                            np.min(patch['Slice_' + str(v + 1)])) != True:
+                    if cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v + 1)])) == False:
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
@@ -134,11 +127,10 @@ def plot_nbrPatchesInCortex(nbr, save_path):
 
 
 # Statistics
-def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, slice=0):
+def statistics(name_cortex, path, path_directionality, patch_size, slice=0):
     '''
     function to obtain a statistics from the directionality analysis
 
-    name_otsu:              file name of the threshold mask, test_C03_smooth3D_bg95_otsu.tif
     name_cortex:            file name of the cortex mask, test_C00_binMask_cortex.tif
     path:                   path to  files
     patch_directionality:   path to where the directionality calculation files lie
@@ -148,12 +140,10 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
     output of the function gives the i,j position of the respective patch, the angle of the correction towards the
     cortex normals and mode
     '''
-    path_otsu = os.path.join(path, name_otsu)
-    mask_otsu = io.imread(path_otsu)[slice]
     path_cortex = os.path.join(path, name_cortex)
     mask_cortex = io.imread(path_cortex)[slice]
-    width = mask_otsu.shape[1]
-    height = mask_otsu.shape[0]
+    width = mask_cortex.shape[1]
+    height = mask_cortex.shape[0]
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
     path_data = os.path.join(path, file)
     data = pd.read_csv(path_data)
@@ -176,7 +166,7 @@ def statistics(name_otsu, name_cortex, path, path_directionality, patch_size, sl
             patch_otsu = mask_otsu[j * patch_size:j * patch_size + patch_size,
                          i * patch_size:i * patch_size + patch_size]
             cortexDepth = distances[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-            if 255 in patch_otsu and cortexDepth <= max_dist:
+            if cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(slice + 1)])) == False:
                 angle_cortex = orientations[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
                 correction = 90 - angle_cortex
                 direction_corrected = patch['Direction'] - correction
@@ -211,7 +201,7 @@ def plot_Statistics(name_data, path, statistics, patch_size, save_path, slice=0)
 
 # main
 side = 'Left'
-patch_size = 80
+patch_size = 40
 name_cortex = side + '_cortex.tif'
 name_data = side + '_smooth2_bg95_frangi2.tif'
 name_otsu = side + '_smooth2_bg95_otsu.tif'
@@ -225,8 +215,8 @@ save_path = path + folder_directionality
 start = timeit.default_timer()
 corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-corrected.to_csv(path + '/' + folder_directionality + 'corrected_df.csv')
-nbr.to_csv(path + '/' + folder_directionality + 'nbr_df.csv')
+pickle.dump(corrected, open(path + '/' + folder_directionality + 'corrected-Otsu.pkl', 'wb'))
+json.dump(nbr, open(path + '/' + folder_directionality + 'nbr-Otsu.json', 'w'))
 
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = True)
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = False)
@@ -235,4 +225,4 @@ nbr.to_csv(path + '/' + folder_directionality + 'nbr_df.csv')
 # plot_Statistics(name_data, path, stats, patch_size, save_path, slice=0)
 stop = timeit.default_timer()
 execution_time = stop - start
-print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds')
+print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds')  # 1642.25 seconds for 20x20
