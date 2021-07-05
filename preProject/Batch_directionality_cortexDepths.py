@@ -35,8 +35,6 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     width = mask_cortex.shape[2]
     height = mask_cortex.shape[1]
     depth = mask_cortex.shape[0]
-    #print(psutil.virtual_memory())
-    #print('0x001')
 
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
@@ -50,15 +48,11 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     for nbr in range(nbr_cortexDepths):
         d[str(nbr)] = np.copy(direction)
         n[str(nbr)] = 0
-    #print(psutil.virtual_memory())
-    #print('0x002')
 
     batch_size = 50
     for batch in range(0, int(depth/batch_size)):
         orientations = []
         dists3D = ndimage.distance_transform_edt(mask_cortex[batch*batch_size:batch*batch_size+batch_size,:,:], sampling=[8,1,1], return_distances=True)
-        #print(psutil.virtual_memory())
-        #print('0x003')
         for z in range(batch_size):
             sx = ndimage.sobel(dists3D[z], axis=0, mode='nearest')
             sy = ndimage.sobel(dists3D[z], axis=1, mode='nearest')
@@ -81,7 +75,7 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
                                  i * patch_size:i * patch_size + patch_size]
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
                     key = np.digitize(cortexDepth, layers, right=False) - 1
-                    if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(np.sum(patch['Slice_' + str(v + 1)])) != True: #cortexDepth > 0 and cortexDepth <= max_dist, check for nan in array:
+                    if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v + 1)])) == False: #cortexDepth > 0 and cortexDepth <= max_dist, check for nan in array:
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch

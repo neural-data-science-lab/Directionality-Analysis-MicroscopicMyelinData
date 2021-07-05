@@ -199,14 +199,13 @@ def plot_Statistics(name_data, path, statistics, patch_size, save_path, slice=0)
     plt.savefig(save_path + 'Statistics_'+slice+'.png', dpi=200)
 
 # main
-side = 'Left'
 patch_size = 80
-name_cortex = side + '_cortex.tif'
-name_data = side + '50_smooth2_bg95.tif'
-name_otsu = side + '_smooth2_bg95_otsu.tif'
-path = '/media/muellerg/Data SSD/Gesine/Data/'
-folder_directionality = side + '_Test_' + str(patch_size)+'/'
-name_directionality = side + str(patch_size)
+name_cortex = 'test_C00_binMask_cortex.tif'
+name_data = 'test_C03_smooth3D_bg95_sato.tif'
+name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
+folder_directionality = 'test_C03_smooth3D_bg95_sato-dice80/'
+name_directionality = 'directionalitySato_smoothBG80_'
 path_directionality = folder_directionality + name_directionality
 cortexDepths = 5
 save_path = path+folder_directionality
