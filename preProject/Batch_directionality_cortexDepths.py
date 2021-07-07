@@ -225,8 +225,8 @@ save_path = path + folder_directionality
 start = timeit.default_timer()
 corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-corrected.to_csv(path + '/' + folder_directionality + 'corrected_df.csv')
-nbr.to_csv(path + '/' + folder_directionality + 'nbr_df.csv')
+corrected.to_csv(path + '/' + folder_directionality + 'corrected.csv')
+nbr.to_csv(path + '/' + folder_directionality + 'nbr.csv')
 
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = True)
 # plot_directionalityCorreted(corrected, nbr, save_path, normalize = False)

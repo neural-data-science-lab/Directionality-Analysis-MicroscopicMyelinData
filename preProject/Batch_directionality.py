@@ -12,7 +12,9 @@ parser.add_argument('side', type=str)
 parser.add_argument('patch_size', type=int)
 args = parser.parse_args()
 
-def directionality_cortexDepth(name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5, pixel=0.542):
+
+def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5,
+                               pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -20,6 +22,7 @@ def directionality_cortexDepth(name_cortex, path, path_directionality, patch_siz
     (Gradient filter over distance transform)
     3. sum over all patches with a certain cortex depth
 
+    name_otsu:              file name of the threshold mask, test_C03_smooth3D_bg95_otsu.tif -> valid patches
     name_cortex:            file name of the cortex mask, test_C00_binMask_cortex.tif -> cortex curvature
     path:                   path to  files
     patch_directionality:   path to where the directionality calculation files lie
@@ -30,6 +33,8 @@ def directionality_cortexDepth(name_cortex, path, path_directionality, patch_siz
     '''
     path_cortex = os.path.join(path, name_cortex)
     mask_cortex = io.imread(path_cortex)
+    path_otsu = os.path.join(path, name_otsu)
+    mask_otsu = io.imread(path_otsu)
     width = mask_cortex.shape[2]
     height = mask_cortex.shape[1]
     depth = mask_cortex.shape[0]
@@ -69,9 +74,12 @@ def directionality_cortexDepth(name_cortex, path, path_directionality, patch_siz
 
                 x = np.arange(batch * batch_size, batch * batch_size + batch_size, 1)
                 for k, v in enumerate(x):
+                    patch_otsu = mask_otsu[v, j * patch_size:j * patch_size + patch_size,
+                                 i * patch_size:i * patch_size + patch_size]
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
                     key = np.digitize(cortexDepth, layers, right=False)
-                    if cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v + 1)])) == False:
+                    if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(
+                            np.min(patch['Slice_' + str(v + 1)])) == False:
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
@@ -88,10 +96,7 @@ def directionality_cortexDepth(name_cortex, path, path_directionality, patch_siz
     return d, n
 
 
-
 # main
-#side = 'Left'
-#patch_size = 80
 name_cortex = args.side + '_cortex.tif'
 name_data = args.side + '_smooth2_bg95_frangi2.tif'
 name_otsu = args.side + '_smooth2_bg95_otsu.tif'
@@ -102,22 +107,11 @@ path_directionality = folder_directionality + name_directionality
 cortexDepths = 5
 save_path = path + folder_directionality
 
-'''patch_size = 80
-name_cortex = 'test_C00_binMask_cortex.tif'
-name_data = 'test_C03_smooth3D_bg95_sato.tif'
-name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/'
-folder_directionality = 'test_C03_smooth3D_bg95_sato-dice80/'
-name_directionality = 'directionalitySato_smoothBG80_'
-path_directionality = folder_directionality + name_directionality
-cortexDepths = 5
-save_path = path+folder_directionality'''
-
 start = timeit.default_timer()
-corrected, nbr = directionality_cortexDepth(name_cortex, path, path_directionality, args.patch_size,
+corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, args.patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)
-corrected.to_csv(path + '/' + folder_directionality + 'corrected.csv')
-nbr.to_csv(path + '/' + folder_directionality + 'nbr.csv')
+corrected.to_csv(path + '/' + folder_directionality + 'd.csv')
+nbr.to_csv(path + '/' + folder_directionality + 'n.csv')
 stop = timeit.default_timer()
 execution_time = stop - start
 print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds')
