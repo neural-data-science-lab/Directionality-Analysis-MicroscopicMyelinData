@@ -1,4 +1,11 @@
+'''
+author: Gesine Müller 26-06-21
+Reproduce Fig 3 b/c from Levy2019 with the mode as the value (scale bar): x: tonotopic axis, y: Layers,
+patch: average along the z-axis; correct with nbr. of valid patches
+'''
+
 import os
+import math
 import numpy as np
 import pandas as pd
 import skimage.io as io
@@ -12,15 +19,14 @@ parser.add_argument('side', type=str)
 parser.add_argument('patch_size', type=int)
 args = parser.parse_args()'''
 
-
-def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5,
-                               pixel=0.542):
+def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directionality, patch_size, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
     2. rotate the orientations from directionality calculation in order to respect cortex curvature
     (Gradient filter over distance transform)
-    3. sum over all patches with a certain cortex depth
+    3. create statistics and calculate the mode in each patch
+    4. sum over all patches with a certain cortex depth and position along the tonotopic axis
 
     name_otsu:              file name of the threshold mask, test_C03_smooth3D_bg95_otsu.tif -> valid patches
     name_cortex:            file name of the cortex mask, test_C00_binMask_cortex.tif -> cortex curvature
@@ -29,8 +35,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     patch_size:             size of square patch on which the orientation was computed
     pixel:                  1 pixel = 0.542 um
 
-    returns dictionary d that contains the valid, corrected sums of orientations for specified cortex depths
-    n nbr od valid patches for the normalization step later on
+    returns pd s: that contains the valid, corrected sums of mode orientations for specified layer and position in tonotopic axis
+    pd n: nbr of valid patches for the normalization step later on
     '''
     path_cortex = os.path.join(path, name_cortex)
     mask_cortex = io.imread(path_cortex)
@@ -40,6 +46,9 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     height = mask_cortex.shape[1]
     depth = mask_cortex.shape[0]
 
+    layers = np.array([0, 60, 235, 300, 560]) / pixel  # starting value of the different layers in um -> pixel value
+    max_dist = 750 / pixel
+
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
     path_patch0 = os.path.join(path, file)
@@ -47,11 +56,11 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     patch0.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
     direction = patch0['Direction']
 
-    n = pd.DataFrame(np.zeros((1, nbr_cortexDepths)))  # pd to sample for the nbr of patches per cortex depth
-    d = pd.DataFrame(np.column_stack((np.copy(direction), np.zeros(
-        (len(direction), nbr_cortexDepths)))))  # pd for corrected valid directionality frequencies
+    # create dataframe contain the nbr per layer and position along tonotopic axis and sum over statistics = average direction per patch
+    nbr = pd.DataFrame(np.zeros((int(height/patch_size), len(layers))))  # pd to sample for the nbr per patches layer and position along tonotopic axis
+    s = pd.DataFrame(np.zeros((int(height/patch_size), len(layers))))  # pd for corrected valid average orientation per layer and pos in tonotopic axis
 
-    batch_size = 5 # batch size concerning z-axis
+    batch_size = 10  # batch size concerning z-axis
     for batch in range(0, int(depth / batch_size)):
         orientations = []
         dists3D = ndimage.distance_transform_edt(mask_cortex[batch * batch_size:batch * batch_size + batch_size, :, :],
@@ -63,8 +72,6 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
             sobel = np.arctan2(sy, sx) * 180 / np.pi
             sobel_smooth = gaussian_filter(sobel, sigma=2)
             orientations.append(sobel_smooth)  # angles
-        layers = np.array([0, 60, 235, 300, 560]) / pixel # starting value of the different layers in um -> pixel value
-        max_dist = 750 / pixel
 
         for i in range(int(width / patch_size)):
             for j in range(int(height / patch_size)):
@@ -78,7 +85,8 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
                     patch_otsu = mask_otsu[v, j * patch_size:j * patch_size + patch_size,
                                  i * patch_size:i * patch_size + patch_size]
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-                    key = np.digitize(cortexDepth, layers, right=False)
+                    key_layer = np.digitize(cortexDepth, layers, right=False) # key for layer identity
+                    key_tonotopy = j  # key for position in tonotopic axis
                     if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(
                             np.min(patch['Slice_' + str(v + 1)])) == False:
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
@@ -90,13 +98,16 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
                         patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(v + 1)]], axis=1)
                         patch_shifted['Direction'].loc[patch_shifted['Direction'] < -90] += 180
                         patch_shifted['Direction'].loc[patch_shifted['Direction'] > 90] -= 180
-                        # relocate directionality values after shifting to original -90/90 (Direction) interval ->take nearest value in 'Direction' and save in value to correct entry (idx)
+                        # relocate directionality values after shiften to original -90/90 interval ->take nearest value in 'Direction' and save in summary
+                        summary = np.stack((np.copy(direction), np.zeros(len(direction))), axis=1)
                         for row in range(len(patch_shifted)):
-                            idx = (np.abs(d[0] - patch_shifted['Direction'][row])).argmin()
-                            d[key][idx] += patch_shifted['Slice_' + str(v + 1)][row]
-                        n[key - 1] += 1
-    return d, n
-
+                            idx = (np.abs(summary[:,0] - patch_shifted['Direction'][row])).argmin()
+                            summary[idx,1] = patch_shifted['Slice_' + str(v + 1)][row]
+                        #summary[:, 0] = np.radians(summary[:, 0] / math.pi)
+                        stats = summary[summary[:, 1].argmax(), 0]  #get mode of directions in patch
+                        s[key_layer - 1][key_tonotopy] += stats
+                        nbr[key_layer - 1][key_tonotopy] += 1
+    return s, nbr
 
 # main
 '''name_cortex = args.side + '_cortex.tif'
@@ -106,7 +117,6 @@ path = '/media/muellerg/Data SSD/Gesine/Data/'
 folder_directionality = args.side + '_frangi_' + str(args.patch_size) + '/'
 name_directionality = args.side + str(args.patch_size) + '_'
 path_directionality = folder_directionality + name_directionality
-cortexDepths = 5
 save_path = path + folder_directionality'''
 
 name_cortex = 'test_C00_binMask_cortex.tif'
@@ -119,13 +129,11 @@ path_directionality = folder_directionality + name_directionality
 save_path = path + folder_directionality
 patch_size = 92
 
+
 start = timeit.default_timer()
-'''corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, args.patch_size,
-                                            nbr_cortexDepths=5, pixel=0.542)'''
-corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
-                                            nbr_cortexDepths=5, pixel=0.542)
-corrected.to_csv(path + '/' + folder_directionality + 'd.csv')
-nbr.to_csv(path + '/' + folder_directionality + 'n.csv')
+stats, nbr = directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directionality, patch_size, pixel=0.542)
+stats.to_csv(path + '/' + folder_directionality + 's.csv')
+nbr.to_csv(path + '/' + folder_directionality + 'nbr.csv')
 stop = timeit.default_timer()
 execution_time = stop - start
 print('Program Executed in ' + str(round(execution_time, 2)) + ' seconds')

@@ -13,7 +13,7 @@ from dipy.viz import regtools
 from skimage.io import imsave
 
 ### convert img to .nii
-path = '/media/muellerg/Data SSD/Gesine/Data/Registration_Overview_Detailed/Gesine Pack_1209/'
+path = 'E:/MasterThesis/'
 static_name = '210719_PR010_Overview_10-55-03.tif'
 moving_name = 'PR010_smaller_subset_version2.h5'
 static_img = io.imread(os.path.join(path, static_name))

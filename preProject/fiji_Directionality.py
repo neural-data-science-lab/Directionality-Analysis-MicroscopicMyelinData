@@ -1,49 +1,40 @@
 from ij import IJ, Prefs
 from ij import WindowManager, ImagePlus
 from fiji.analyze.directionality import Directionality_
+import math
 
-filename = "test_C03_smooth3D_bg95.tif"
-path = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/"
-outputpath = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/test_C03_smooth3D_bg95/"
-name = "directionalityLG_"
+side = 'Left'
+patch_size = int(math.floor(92.25))
+print(patch_size)
+filename = 'test_C03_smooth3D_bg95_frangi.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
+outputpath = path+"dir_"+str(patch_size) +"/"
+name = side+str(patch_size)
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]
 height = img.getDimensions()[1]
-if ( (width % 60) != 0  ): print("Adjust patch size.")
-if ( (height % 80) != 0  ): print("Adjust patch size.")
-x_bound = width/60
-y_bound = height/80
+x_bound = width/patch_size
+y_bound = height/patch_size
 
 #create patches and run directionality on them
 for i in range(x_bound):
 	for j in range(y_bound):
-		img = IJ.openImage(path + filename)
-		k = i*60
-		l = j*80
-		img.setRoi(k, l, 60, 80)
-		IJ.run(img, "Crop", "")
+		img2 = img.duplicate()
+		k = i*patch_size
+		l = j*patch_size
+		img2.setRoi(k, l, patch_size, patch_size)
+		IJ.run(img2, "Crop", "")
 		dir = Directionality_()
-		dir.setImagePlus(img)
+		dir.setImagePlus(img2)
 		dir.setMethod(Directionality_.AnalysisMethod.LOCAL_GRADIENT_ORIENTATION)
 		dir.setBinNumber(90)
 		dir.setBinStart(-90)
 		dir.setBuildOrientationMapFlag(True)
 		dir.computeHistograms()
 		dir.fitHistograms()
-		#plot_frame = dir.plotResults()
-		#plot_frame.setVisible(True)
-		#data_frame = dir.displayFitAnalysis()
-		#data_frame.setVisible(True) 
-		#table = dir.displayResultsTable()
-		#table.show("Directionality histograms")
 		dir.displayResultsTable().show("Directionality histograms")
-		IJ.saveAs("Results", outputpath+name+str(i)+"_"+str(j)+".csv")
-		#stack = dir.getOrientationMap()
-		#ImagePlus("Orientation map", stack).show()
-		#Directionality_.generateColorWheel().show()
+		IJ.saveAs("Results", outputpath + name+str(i)+"_"+str(j)+".csv")
 		window = name+str(i)+"_"+str(j)+".csv"
 		IJ.selectWindow(window)
 		IJ.run("Close")
-		
-		

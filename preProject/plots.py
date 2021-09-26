@@ -5,6 +5,10 @@ import seaborn as sns
 import pandas as pd
 
 def plot_directionalityCorreted(patch_size, data_l, nbr_l, data_r, nbr_r, save_path, normalize = False):
+    '''
+    Plot 1D directionality per layer; comparison between left and right cortex
+    choice between normalization or not with the nbr of patches per layer
+    '''
     labels = nbr_l.keys()
     fig, (ax1,ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 6), dpi=200) #, sharex=True, sharey=True
     s_l = np.sum(nbr_l.values)
@@ -52,6 +56,12 @@ def plot_directionalityCorreted(patch_size, data_l, nbr_l, data_r, nbr_r, save_p
     plt.savefig(save_path+name, dpi = 200)
 
 def plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, save_path):
+    '''
+        Plot 1D directionality per layer; comparison between left and right cortex
+        polar version of plot_directionalityCorreted
+            choice between normalization or not with the nbr of patches per layer
+
+        '''
     fig = plt.figure(figsize=(12, 6), dpi=200)
     ax1 = fig.add_subplot(121, polar=True)
     ax2 = fig.add_subplot(122, polar=True)
@@ -85,6 +95,9 @@ def plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, save_path
 
 
 def plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, save_path):
+    '''
+    PLot to display the nbr of patches summed over for the directionality analysis
+    '''
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 6), dpi=200)
     ax[0].bar(np.arange(0, len(nbr_l.keys()), 1), nbr_l.values.ravel())
     ax[1].bar(np.arange(0, len(nbr_r.keys()), 1), nbr_r.values.ravel())
@@ -105,6 +118,8 @@ def plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, save_path):
     # save figure
     plt.savefig(save_path + 'nbrPatches_'+str(patch_size)+'.png', dpi=200)
 
+
+# main
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/'
 patch_size = 20
 folder_left = 'Left_frangi_'+str(patch_size)+'/'
@@ -130,4 +145,31 @@ plot_directionalityCorreted(patch_size, data_l, nbr_l, data_r, nbr_r, path, norm
 plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, path)
 plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, path)
 
+
+############################################### Statistics Levy #######################################################
+def plot_color2D_layerTonotopy(stats, nbr, save_path):
+    '''
+    PLot ala Levy2019 3b/c with the axes: layers and tonotopic axis
+    Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
+    '''
+    fig, ax = plt.subplots(1, 1, figsize=(3, 8), dpi=300)
+    x_axis_labels = ['I', 'II/III', 'IV', 'V', 'VI']  # labels for x-axis
+    sns.color_palette("mako", as_cmap=True)
+    p = sns.heatmap(stats/nbr, cmap = 'viridis', square=True, xticklabels=x_axis_labels,yticklabels=False,
+                    vmin=np.min(np.min(stats/nbr)), vmax = np.max(np.max(stats/nbr)), center = 0, cbar_kws={"shrink": .6},
+                    annot=True, annot_kws={"size": 5})
+
+    ax.set_ylabel('Tonotopic axis')
+    ax.set_xlabel('Layers')
+    plt.savefig(save_path + 'Layers_tonotopy.png', dpi=300)
+
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
+folder_directionality = 'dir_92/'
+save_path = path + folder_directionality
+
+layers = ['I', 'II/III', 'IV', 'V', 'VI']
+stats = pd.read_csv(save_path + 's.csv')
+stats = stats.drop('Unnamed: 0', axis = 1)
+nbr = pd.read_csv(save_path + 'nbr.csv')
+nbr = nbr.drop('Unnamed: 0', axis = 1)
 
