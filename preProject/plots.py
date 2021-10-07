@@ -1,8 +1,30 @@
 #### Plots (later for publications) using seaborn
 import numpy as np
+import math
+import os
+import skimage.io as io
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+
+def plot_Statistics(name_data, path, statistics, patch_size, save_path, slice=0):
+    '''
+    Plot to have an overlay of frangi dataset and modes from statistics
+    require mode from all patches of one z-slice (depth): see Statistics_only.py
+    '''
+    path_data = os.path.join(path, name_data)
+    data = io.imread(path_data)[slice]
+    stats = pd.DataFrame(statistics)
+    X = stats[0] * patch_size + patch_size / 2
+    Y = stats[1] * patch_size + patch_size / 2
+    angles = stats[2] + np.degrees(stats[3] * math.pi)
+    U = np.cos(angles * np.pi / 180)
+    V = np.sin(angles * np.pi / 180)
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
+    ax.imshow(data, cmap="gray")
+    ax.quiver(X, Y, U, V, color='red', units='xy')
+    # save figure
+    plt.savefig(save_path + 'Statistics_' + slice + '.png', dpi=200)
 
 def plot_directionalityCorreted(patch_size, data_l, nbr_l, data_r, nbr_r, save_path, normalize = False):
     '''
@@ -147,29 +169,51 @@ plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, path)
 
 
 ############################################### Statistics Levy #######################################################
-def plot_color2D_layerTonotopy(stats, nbr, save_path):
+def plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, cmap = 'Spectral', pixel = 0.542):
     '''
     PLot ala Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
     '''
-    fig, ax = plt.subplots(1, 1, figsize=(3, 8), dpi=300)
+    fig, (ax1) = plt.subplots(1, 1, figsize=(10, 15))
+    fig.subplots_adjust(bottom=0.2)
     x_axis_labels = ['I', 'II/III', 'IV', 'V', 'VI']  # labels for x-axis
     sns.color_palette("mako", as_cmap=True)
-    p = sns.heatmap(stats/nbr, cmap = 'viridis', square=True, xticklabels=x_axis_labels,yticklabels=False,
-                    vmin=np.min(np.min(stats/nbr)), vmax = np.max(np.max(stats/nbr)), center = 0, cbar_kws={"shrink": .6},
-                    annot=True, annot_kws={"size": 5})
+    sns.heatmap(stats / nbr, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
+                vmin=np.min(np.min(stats / nbr)), vmax=np.max(np.max(stats / nbr)), center=0, cbar_kws={"shrink": .6},
+                annot=True, annot_kws={"size": 5})  # xticklabels=x_axis_labels,
+    ax1.set_xlim(ax1.get_xlim())
+    ax2 = ax1.twiny()
+    ax1.set_ylabel('Tonotopic axis', fontsize=20)
+    ax1.set_xlabel('Layers', fontsize=20)
+    pixel = 0.542
+    layers = np.array([0, 60, 235, 300, 560]) / pixel
+    layer_mid = np.array([0, 30, 60, 147.5, 235, 267.5, 300, 430, 560, 655, 750]) / pixel
+    new_tick_locations = layer_mid / patch_size
+    ax2.xaxis.set_ticks_position("bottom")
+    ax2.xaxis.set_label_position("bottom")
+    ax2.spines["bottom"].set_position(("axes", -0.05))
+    ax2.set_xticks(new_tick_locations)
+    Layers = ['', 'I', '', 'II/III', '', 'IV', '', 'V', '', 'VI', '']
+    ax2.set_xticklabels(Layers, fontsize=16, horizontalalignment='center')
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    # ax2.spines['bottom'].set_visible(False)
+    ax2.spines['left'].set_visible(False)
 
-    ax.set_ylabel('Tonotopic axis')
-    ax.set_xlabel('Layers')
-    plt.savefig(save_path + 'Layers_tonotopy.png', dpi=300)
+    plt.savefig(save_path + cmap+ 'Layers_tonotopy.png', dpi=180)
+    plt.close()
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
-folder_directionality = 'dir_92/'
-save_path = path + folder_directionality
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/' #'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/'
+data = path + 'dir_92/' #'Right_frangi_40/'
+#right = path + 'Right_frangi_40/'
+save_path = data
 
-layers = ['I', 'II/III', 'IV', 'V', 'VI']
-stats = pd.read_csv(save_path + 's.csv')
+patch_size = 92
+Layers = ['I', 'II/III', 'IV', 'V', 'VI']
+stats = pd.read_csv(data + 'Oris.csv')
 stats = stats.drop('Unnamed: 0', axis = 1)
-nbr = pd.read_csv(save_path + 'nbr.csv')
+nbr = pd.read_csv(data  + 'Orinbr.csv')
 nbr = nbr.drop('Unnamed: 0', axis = 1)
+plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size)
+
 

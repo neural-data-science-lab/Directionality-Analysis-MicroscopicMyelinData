@@ -1,39 +1,73 @@
 import imagej
-ij = imagej.init(headless=False) #'C:/Users/Gesine/Downloads/Fiji.app'; 'net.imagej:imagej+net.imagej:imagej-legacy'
+ij = imagej.init('C:/Users/Gesine/Downloads/Fiji.app', headless=False) #'C:/Users/Gesine/Downloads/Fiji.app'; 'net.imagej:imagej+net.imagej:imagej-legacy'
 
-from jnius import autoclass
-autoclass('java.lang.System').out.println('Hello world')
-
-from matplotlib import pyplot as plt
 from skimage import io
 import numpy as np
+import scyjava
+from scyjava import jimport
+from jnius import autoclass
+WindowManager = autoclass('ij.WindowManager')
 
 
-filename = "test_C03_smooth3D_bg95_sato.tif"
-path = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/test/"
-outputpath = path + "test_C03_smooth3D_bg95_sato_dice80_py/"
-name = "py_dice80_"
-img = io.imread(path + filename)
-#ij.py.show(img[0])
-#ij.ui().show('sato', ij.py.to_java(img)) #visualization such as in fiji itself
+name_data = 'test_C03_smooth3D_bg95_frangi.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/' #'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/'
+outputpath = path + 'test_pyFiji/'
+img = io.imread(path + name_data)
+test_img = img[0,0:80,0:80]
+ij.ui().show('frangi', ij.py.to_java(test_img))
+#image = ij.py.from_java(img[0,0:80,0:80])
+#ij.py.show(image, cmap='gray')
+
+### both works somewhat the same ###
+'''directionality_macro = """
+run("Directionality", "method=[Local gradient orientation] nbins=90 histogram_start=-90 histogram_end=90 display_table");
+"""
+ij.py.run_macro(directionality_macro)'''
 
 ## create plugin
 plugin = 'Directionality'
 args = {
-    'Method': 'Local gradient orientation',
-    'Nbins': 90,
-    'Histogram start': -90,
-    'Histogram end': 90,
-    'Build orientation map': 1,
-    'Display table': 1,
-}
+    'method': 'Local gradient orientation',
+    'nbins': 90,
+    'histogram_start': -90,
+    'histogram_end': 90,
+    'display_table': True
+    }
+close = """
+selectWindow("Directionality histograms for frangi (using Local gradient orientation)")
+run("Close")
+run("Collect Garbage")
+WindowManager.closeAllWindows()
+"""
+ij.py.run_plugin(plugin, args)
+ij.py.run_macro(close)
+
+### try OrientationJ ### nicht besser als in Fiji selbst -> zu viele fenster offen!!!
+'''OrientationJ_macro="""
+open('C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/testImage_artificial-fibers.tif')
+run("OrientationJ Distribution", "tensor=2.0 gradient=0 radian=on table=on min-coherency=0.0 min-energy=0.0 ");
+saveAs("Results", outputpath + "test_OrientationJ.csv")
+"""
+ij.py.run_marco(OrientationJ_macro)
+
+plugin = 'OrientationJ Distribution'
+args = {
+    'tensor': 2.0,
+    'gradient': 0,
+    'radian': 0,
+    'min-coherency': 0.0,
+    'min-energy': 0.0,
+    'table': 1,
+    'histogram': 0
+    }
+ij.py.run_plugin(plugin, args)'''
+
+WindowManager = jimport('ij.WindowManager')
+current_image = WindowManager.getCurrentImage()
 
 width = img.shape[2]
 height = img.shape[1]
 depth = img.shape[0]
-
-test_img = img[:,0:80, 0:80]
-t = ij.ui().show('sato', ij.py.to_java(test_img))
 
 patch_size = 80
 x_bound = width/patch_size
@@ -44,6 +78,3 @@ for i in range(x_bound):
         t = ij.ui().show('patch3D', ij.py.to_java(img_patch))
         ij.py.run_plugin(plugin, args)
 
-'''issues
-- Window Manager: windowManager = jnius.autoclass('ij.WindowManager') does not work
-- no idea how to save table of directionality analysis'''

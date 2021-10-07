@@ -13,8 +13,8 @@ parser.add_argument('patch_size', type=int)
 args = parser.parse_args()'''
 
 
-def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, nbr_cortexDepths=5,
-                               pixel=0.542):
+def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, colnames, header,
+                               nbr_cortexDepths=5, pixel=0.542):
     '''
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
     which the respective mask patch is not 0;
@@ -43,8 +43,10 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
     path_patch0 = os.path.join(path, file)
-    patch0 = pd.read_csv(path_patch0)
-    patch0.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+    patch0 = pd.read_csv(path_patch0, encoding = "ISO-8859-1")
+    if header == False:
+        patch0.columns = colnames
+    patch0.rename(columns={'Direction (°)': 'Direction'}, inplace=True) #�
     direction = patch0['Direction']
 
     n = pd.DataFrame(np.zeros((1, nbr_cortexDepths)))  # pd to sample for the nbr of patches per cortex depth
@@ -70,8 +72,10 @@ def directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality
             for j in range(int(height / patch_size)):
                 filename = path_directionality + str(i) + '_' + str(j) + '.csv'
                 path_patch = os.path.join(path, filename)
-                patch = pd.read_csv(path_patch)
-                patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+                patch = pd.read_csv(path_patch, encoding = "ISO-8859-1")
+                if header == False:
+                    patch.columns = colnames
+                patch.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
 
                 x = np.arange(batch * batch_size, batch * batch_size + batch_size, 1)
                 for k, v in enumerate(x):
@@ -114,15 +118,23 @@ name_data = 'test_C03_smooth3D_bg95_frangi.tif'
 name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
 folder_directionality = 'dir_92/'
-name_directionality = 'Left92'
+name_directionality = 'Left92Ori'
 path_directionality = folder_directionality + name_directionality
 save_path = path + folder_directionality
 patch_size = 92
 
+###### for possible colnames: OrientationJ, set header to False ######
+f = folder_directionality + 'Left92' + str(0) + '_' + str(0) + '.csv'
+path_p = os.path.join(path, f)
+p0 = pd.read_csv(path_p, encoding = "ISO-8859-1")
+colnames = p0.keys()[1:][::2]
+colnames = colnames.insert(0,p0.keys()[0])
+#################################
+
 start = timeit.default_timer()
 '''corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, args.patch_size,
                                             nbr_cortexDepths=5, pixel=0.542)'''
-corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size,
+corrected, nbr = directionality_cortexDepth(name_otsu, name_cortex, path, path_directionality, patch_size, colnames, header = False,
                                             nbr_cortexDepths=5, pixel=0.542)
 corrected.to_csv(path + '/' + folder_directionality + 'd.csv')
 nbr.to_csv(path + '/' + folder_directionality + 'n.csv')

@@ -20,7 +20,7 @@ start = timeit.default_timer()
 vesselness = np.zeros((2, data.shape[1],  data.shape[2]))
 for z in range(2):
     f = frangi(data[z], black_ridges = False)
-    vesselness[z,:,:] = normalize(f)*255
+    vesselness[z,:,:] = normalize(f)*65536
 imsave(path+name_data+"_frangi.tif", vesselness.astype('uint16'))
 stop = timeit.default_timer()
 execution_time = stop - start
