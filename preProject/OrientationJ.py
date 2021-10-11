@@ -5,6 +5,12 @@ import skimage.io as io
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+import argparse
+
+'''parser = argparse.ArgumentParser()
+parser.add_argument('side', type=str)
+parser.add_argument('patch_size', type=int)
+args = parser.parse_args()'''
 
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
@@ -17,10 +23,11 @@ def OrientationJ(img, sigma, direction):
     dim = img.shape[0]
     for i in range(dim):
         axx, axy, ayy = feature.structure_tensor(
-            img[i].astype(np.float32), sigma=sigma, mode="reflect", order="rc"
+            img[i].astype(np.float32), sigma=sigma, mode="reflect", order="xy"
         )
-        dom_ori.append(np.rad2deg(np.arctan2(2 * axy.mean(), (ayy.mean() - axx.mean())) / 2))
+        #dom_ori.append(np.rad2deg(np.arctan2(2 * axy.mean(), (ayy.mean() - axx.mean())) / 2))
         o = np.rad2deg(np.arctan2(2 * axy, (ayy - axx)) / 2)
+        dom_ori.append(np.rad2deg(np.mean(o) % (2 * math.pi)) - 180)
         d = np.digitize(o, direction, right=True)
         h = np.histogram(d, bins=90, range=(0, 89))[0]
         #hist_ori.append(pd.DataFrame(np.vstack([direction, h / np.sum(h)]).T))
@@ -41,6 +48,13 @@ def OrientationJ(img, sigma, direction):
 
 
 ###### main ######
+'''
+name_data = args.side + '_smooth2_bg95_frangi2.tif'
+path = '/media/muellerg/Data SSD/Gesine/Data/'
+folder_directionality = args.side + '_frangi_' + str(args.patch_size) + '/'
+name_directionality = args.side + str(args.patch_size) + '_'
+'''
+
 side = 'Left'
 patch_size = int(math.floor(92.25))
 filename = 'test_C03_smooth3D_bg95_frangi.tif'

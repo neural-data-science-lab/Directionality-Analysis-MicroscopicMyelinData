@@ -16,7 +16,7 @@ parser.add_argument('patch_size', type=int)
 parser.add_argument('slice', type=int)
 args = parser.parse_args()'''
 
-def statistics(name_cortex, name_otsu, path, path_directionality, patch_size, slice=0):
+def statistics(name_cortex, name_otsu, path, path_directionality, patch_size, colnames, header = True, slice=0):
     '''
     function to obtain a statistics from the directionality analysis
 
@@ -37,8 +37,10 @@ def statistics(name_cortex, name_otsu, path, path_directionality, patch_size, sl
 
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
     path_data = os.path.join(path, file)
-    data = pd.read_csv(path_data)
-    data.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+    data = pd.read_csv(path_data, encoding = "ISO-8859-1")
+    if not header:
+        data.columns = colnames
+    data.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
     direction = pd.DataFrame(np.stack((data['Direction'], np.zeros(len(data['Direction']))), axis=1))
     distances = ndimage.distance_transform_edt(mask_cortex, return_distances=True)
     sx = ndimage.sobel(distances, axis=0, mode='nearest')
@@ -52,8 +54,11 @@ def statistics(name_cortex, name_otsu, path, path_directionality, patch_size, sl
         for j in range(int(height / patch_size)):
             filename = path_directionality + str(i) + '_' + str(j) + '.csv'
             path_patch = os.path.join(path, filename)
-            patch = pd.read_csv(path_patch)
-            patch.rename(columns={'Direction (�)': 'Direction'}, inplace=True)
+            patch = pd.read_csv(path_patch, encoding = "ISO-8859-1")
+            if not header:
+                patch.columns = colnames
+            patch.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
+
             patch_otsu = mask_otsu[j * patch_size:j * patch_size + patch_size, i * patch_size:i * patch_size + patch_size]
             cortexDepth = distances[int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
             if 255 in patch_otsu and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(slice + 1)])) == False:
@@ -116,11 +121,18 @@ name_data = 'test_C03_smooth3D_bg95_frangi.tif'
 name_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
 folder_directionality = 'dir_92/'
-name_directionality = 'Left92'
+name_directionality = 'Left92Ori'
 path_directionality = folder_directionality + name_directionality
 save_path = path + folder_directionality
 patch_size = 92
 cortexDepths = 5
 
-s = statistics(name_cortex, name_otsu, path, path_directionality, patch_size)
+#colnames
+f = folder_directionality + 'Left92' + str(0) + '_' + str(0) + '.csv'
+path_p = os.path.join(path, f)
+p0 = pd.read_csv(path_p, encoding = "ISO-8859-1")
+colnames = p0.keys()[1:][::2]
+colnames = colnames.insert(0,p0.keys()[0])
+
+s = statistics(name_cortex, name_otsu, path, path_directionality, patch_size, colnames, header = False)
 plot_Statistics(name_data, path, s, patch_size, save_path)
