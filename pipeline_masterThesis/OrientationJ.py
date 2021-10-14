@@ -11,9 +11,6 @@ parser.add_argument('side', type=str)
 parser.add_argument('patch_size', type=int)
 args = parser.parse_args()'''
 
-def NormalizeData(data):
-    return (data - np.min(data)) / (np.max(data) - np.min(data))
-
 def OrientationJ(img, sigma, direction):
     """OrientationsJ's dominant direction and orientation """
     dom_ori = []
@@ -23,9 +20,8 @@ def OrientationJ(img, sigma, direction):
     for i in range(dim):
         axx, axy, ayy = feature.structure_tensor(
             img[i].astype(np.float32), sigma=sigma, mode="reflect", order="xy")
-        #dom_ori.append(np.rad2deg(np.arctan2(2 * axy.mean(), (ayy.mean() - axx.mean())) / 2))
         o = np.rad2deg(np.arctan2(2 * axy, (ayy - axx)) / 2)
-        o = o[o != 0]
+        o = o[o != 0]   #delete zeros from array in order to have 0 as the mode direction always
         if o.size == 0:
             h = np.zeros(len(direction))
             hist_ori.append(h)
@@ -71,7 +67,6 @@ path_patch0 = os.path.join(path, file)
 patch0 = pd.read_csv(path_patch0, encoding = "ISO-8859-1")
 patch0.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
 direction = patch0['Direction']
-titles = patch0.keys()[1:][::2]
 
 width = data.shape[2]
 height = data.shape[1]
@@ -88,16 +83,3 @@ for i in range(x_bound):
         d.append(dom_dir)
     d = pd.DataFrame(d)
     d.to_csv(outputpath + name + 'domOri2' + str(i) + '.csv', index=False)
-
-
-
-
-
-
-
-'''code graveyard
-### neglect 0.0 -> digitize -> histogram ???
-ori_nonzero = ori[np.nonzero(ori)]
-plt.imshow(img,cmap='gray')
-plt.imshow(ori,cmap='gray')'''
-

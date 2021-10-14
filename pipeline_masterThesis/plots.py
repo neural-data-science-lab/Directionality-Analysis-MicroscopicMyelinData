@@ -169,7 +169,7 @@ plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, path)
 
 
 ############################################### Statistics Levy #######################################################
-def plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, cmap = 'PuOr', pixel = 0.542):
+def plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, method, cmap = 'PuOr', pixel = 0.542):
     '''
     PLot ala Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -179,14 +179,12 @@ def plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, cmap = 'PuOr',
     x_axis_labels = ['I', 'II/III', 'IV', 'V', 'VI']  # labels for x-axis
     sns.color_palette("mako", as_cmap=True)
     sns.heatmap(stats / nbr, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
-                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .6},
-                annot=True, annot_kws={"size": 5})  # np.min(np.min(stats / nbr)), np.max(np.max(stats / nbr))
+                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .6}) #, annot=True, annot_kws={"size": 5}
     ax1.set_xlim(ax1.get_xlim())
     ax2 = ax1.twiny()
     ax1.set_ylabel('Tonotopic axis', fontsize=20)
     ax1.set_xlabel('Layers', fontsize=20)
-    pixel = 0.542
-    layers = np.array([0, 60, 235, 300, 560]) / pixel
+    #layers = np.array([0, 60, 235, 300, 560]) / pixel
     layer_mid = np.array([0, 30, 60, 147.5, 235, 267.5, 300, 430, 560, 655, 750]) / pixel
     new_tick_locations = layer_mid / patch_size
     ax2.xaxis.set_ticks_position("bottom")
@@ -200,20 +198,21 @@ def plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, cmap = 'PuOr',
     # ax2.spines['bottom'].set_visible(False)
     ax2.spines['left'].set_visible(False)
 
-    plt.savefig(save_path + cmap+ 'Layers_tonotopy.png', dpi=180)
+    plt.savefig(save_path +'Layers_tonotopy_'+method+'_noAnnot.png', dpi=180)
     plt.close()
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/' #'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/'
-data = path + 'dir_92/' #'Right_frangi_40/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/' #'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/'
+data = path + 'Right_frangi_40/' #'Right_frangi_40/'
 #right = path + 'Right_frangi_40/'
 save_path = data
 
-patch_size = 92
+method = 'OrientationJ'
+patch_size = 40
 Layers = ['I', 'II/III', 'IV', 'V', 'VI']
-stats = pd.read_csv(data + 's.csv')
+stats = pd.read_csv(data + 's_PerPatch_Ori.csv')
 stats = stats.drop('Unnamed: 0', axis = 1)
-nbr = pd.read_csv(data  + 'nbr.csv')
+nbr = pd.read_csv(data  + 'nbr_PerPatch_Ori.csv')
 nbr = nbr.drop('Unnamed: 0', axis = 1)
-plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size)
+plot_color2D_layerTonotopy(stats, nbr, save_path, patch_size, method)
 
 

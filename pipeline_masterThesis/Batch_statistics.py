@@ -34,6 +34,8 @@ def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directional
     path:                   path to  files
     patch_directionality:   path to where the directionality calculation files lie
     patch_size:             size of square patch on which the orientation was computed
+    colnames:               have the same dataframe from fiji directionality and OrientationJ.py
+    header:                 if True: fiji directionality, if False: OrientationJ.py
     pixel:                  1 pixel = 0.542 um
 
     returns pd s: that contains the valid, corrected sums of mode orientations for specified layer and position in tonotopic axis
@@ -48,9 +50,7 @@ def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directional
     depth = mask_cortex.shape[0]
 
     max_dist = 750 / pixel
-    #layers = np.array([0, 60, 235, 300, 560]) / pixel  # starting value of the different layers in um -> pixel value
     layers = np.arange(0, max_dist-patch_size, patch_size)   # for plot for patch size
-    layers_mid = layers + patch_size/2
 
     # initialize the sum over the directionality
     file = path_directionality + str(0) + '_' + str(0) + '.csv'
@@ -76,7 +76,7 @@ def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directional
             sy = ndimage.sobel(dists3D[z], axis=1, mode='nearest')
             sobel = np.arctan2(sy, sx) * 180 / np.pi
             sobel_smooth = gaussian_filter(sobel, sigma=2)
-            orientations.append(sobel_smooth)  # angles
+            orientations.append(sobel_smooth)  # angles difference between cortex normal and 0° (East)
 
         for i in range(int(width / patch_size)):
             for j in range(int(height / patch_size)):
@@ -110,7 +110,6 @@ def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directional
                         for row in range(len(patch_shifted)):
                             idx = (np.abs(summary[:,0] - patch_shifted['Direction'][row])).argmin()
                             summary[idx,1] = patch_shifted['Slice_' + str(v + 1)][row]
-                        #summary[:, 0] = np.radians(summary[:, 0] / math.pi)
                         stats = summary[summary[:, 1].argmax(), 0]  #get mode of directions in patch
                         s[key_layer][key_tonotopy] += stats
                         nbr[key_layer][key_tonotopy] += 1
@@ -118,7 +117,6 @@ def directionality_layer_tonotopy(name_otsu, name_cortex, path, path_directional
 
 # main
 '''name_cortex = args.side + '_cortex.tif'
-name_data = args.side + '_smooth2_bg95_frangi2.tif'
 name_otsu = args.side + '_smooth2_bg95_otsu.tif'
 path = '/media/muellerg/Data SSD/Gesine/Data/'
 folder_directionality = args.side + '_frangi_' + str(args.patch_size) + '/'
