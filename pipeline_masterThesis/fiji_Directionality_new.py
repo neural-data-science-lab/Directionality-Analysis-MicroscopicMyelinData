@@ -6,8 +6,8 @@ side = 'Left'
 patch_size = 80
 filename = side+'50_smooth2_bg95_frangi.tif'
 path = '/media/muellerg/Data SSD/Gesine/Data/'
-outputpath = path+side+'_frangiTest_'+str(patch_size)+'/'
-name = side+str(patch_size)
+outputpath = path+side+'_frangiTest_'+str(patch_size)+'/' #maybe has to be changed for pipeline Ansatz
+name = side+str(patch_size)+'_Fiji_Directionality_'
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]

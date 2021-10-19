@@ -12,7 +12,8 @@ parser.add_argument('patch_size', type=int)
 args = parser.parse_args()'''
 
 def OrientationJ(img, sigma, direction):
-    """OrientationsJ's dominant direction and orientation """
+    """OrientationsJ's dominant direction and orientation
+    vgl. for artificial-fibre structures: qualitatively the same result"""
     dom_ori = []
     hist_ori = []
     hist_ori.append(direction)
