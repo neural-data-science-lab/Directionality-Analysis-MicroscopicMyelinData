@@ -3,10 +3,9 @@ from ij import WindowManager, ImagePlus
 from fiji.analyze.directionality import Directionality_
 
 side = 'Left'
-patch_size = 80
-filename = side+'50_smooth2_bg95_frangi.tif'
-path = '/media/muellerg/Data SSD/Gesine/Data/'
-outputpath = path+side+'_frangiTest_'+str(patch_size)+'/' #maybe has to be changed for pipeline Ansatz
+patch_size = int(round(92.25))
+filename = 'test_C03_smooth3D_bg95_frangi' #side+'_C03_frangi.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
 name = side+str(patch_size)+'_Fiji_Directionality_'
 img = IJ.openImage(path + filename)
 
@@ -34,7 +33,7 @@ for i in range(x_bound):
 		dir.computeHistograms()
 		dir.fitHistograms()
 		dir.displayResultsTable().show("Directionality histograms")
-		IJ.saveAs("Results", outputpath+name+str(i)+"_"+str(j)+".csv")
+		IJ.saveAs("Results", path+name+str(i)+"_"+str(j)+".csv")
 		window = name+str(i)+"_"+str(j)+".csv"
 		IJ.selectWindow(window)
 		IJ.run("Close")
