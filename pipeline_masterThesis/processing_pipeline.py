@@ -222,80 +222,6 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
 
 
 ############################################# Directionality vizualizations ##########################################
-def plot_directionalityPolar(patch_size, data_l, nbr_l, data_r, nbr_r, method, path_output):
-    '''
-    Plot 1D directionality per layer; comparison between left and right cortex
-    patch_size:         size of patch on which the directionality distributions were computed
-    data_l, data_r:     sum of all distributions for each layer left/right
-    nbr_l, nbr_r:       nbr od patches per layer for normalization left/right
-    method:             Fiji_directionality, OrientationJ
-    path_output:        path to where to save the resulting image
-    return:             polar plot of both sides per layer
-    '''
-    fig = plt.figure(figsize=(12, 6), dpi=200)
-    ax1 = fig.add_subplot(121, polar=True)
-    ax2 = fig.add_subplot(122, polar=True)
-    x_lim = 0
-    labels = ['I', 'II/III', 'IV', 'V', 'VI']
-    theta = np.deg2rad(np.array(data_l[0]))
-    for i in (np.arange(1, data_l.shape[1],1)):
-        freq_l = data_l[i] / (nbr_l[i-1])[0]
-        freq_r = data_r[i] / (nbr_r[i-1])[0]
-        ax1.plot(theta, np.array(freq_l))
-        ax2.plot(theta, np.array(freq_r))
-        max_lim = np.max(freq_l)
-        if max_lim > x_lim:
-            x_lim = max_lim
-    title = 'Normalized directionality analysis'
-    fig.suptitle(title, fontsize=14)
-    ax1.set_thetamin(90)
-    ax1.set_thetamax(-90)
-    ax1.set_theta_zero_location("W")
-    ax1.set_theta_direction(-1)
-    ax2.set_thetamin(90)
-    ax2.set_thetamax(-90)
-    ax1.set_ylim(0, x_lim)
-    ax1.invert_xaxis()
-    ax2.set_ylim(0, x_lim)
-    plt.subplots_adjust(wspace=0, hspace=0)
-    ax2.set_title('Right')
-    ax1.set_title('Left')
-    name = 'PolarLayer_' + side + str(patch_size) + method+'.png'
-    plt.savefig(path_output+name, dpi = 200)
-    plt.close()
-
-
-def plot_nbrPatchesInCortex(patch_size, nbr_l,  nbr_r, method, path_output):
-    '''
-    PLot to display the nbr of patches summed over for the directionality analysis
-    patch_size:         size of patch on which the directionality distributions were computed
-    nbr_l, nbr_r:       nbr od patches per layer for normalization left/right
-    method:             Fiji_directionality, OrientationJ
-    path_output:        path to where to save the resulting image
-    return:             bar plot of nbr of patches for both sides and layers
-    '''
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 6), dpi=200)
-    ax[0].bar(np.arange(0, nbr_l.shape[1], 1), nbr_l.values.ravel())
-    ax[1].bar(np.arange(0, nbr_r.shape[1], 1), nbr_r.values.ravel())
-    ax[0].invert_xaxis()
-    ax[0].set_ylabel('# patches', fontsize=14)
-    ax[0].set_xlabel('cortex depth', fontsize=14)
-    ax[1].set_xlabel('cortex depth', fontsize=14)
-    ax[0].set_xticks(np.arange(0,  nbr_l.shape[1], 1))
-    ax[1].set_xticks(np.arange(0,  nbr_r.shape[1], 1))
-    ax[0].set_ylim([0, round(max(max(nbr_l.max(axis=1)), max(nbr_r.max(axis=1))),-2)]) #-2 to come to next 100 for axis
-    ax[0].set_xticklabels(np.array(['I', 'II/III', 'IV', 'V', 'VI']), fontsize=14)
-    ax[1].set_xticklabels(np.array(['I', 'II/III', 'IV', 'V', 'VI']), fontsize=14)
-    ax[1].set_yticks([])
-    plt.subplots_adjust(wspace=0, hspace=0)
-    ax[0].set_title('Left')
-    ax[1].set_title('Right')
-    fig.suptitle('Patches per cortex layer', fontsize=14)
-    # save figure
-    plt.savefig(path_output + 'nbrPatches_'+side+str(patch_size)+method+'.png', dpi=200)
-    plt.close()
-
-
 def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, cmap = 'PuOr', pixel = 0.542):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
@@ -376,8 +302,6 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, sl
 ######################################################## MAIN ########################################################
 ######################################## define batch-size, patch-size load data #####################################
 # ToDo: checking PreProcessing_Masks() -> fix cortex mask
-# ToDo: create a plot substracting the differences between Fiji Directionality_() and my OrientationJ()
-# ToDo: plot with dominant direction / mode of distribution instead
 
 batch_size = 2
 patch_size = int(round(92.25)) # 18.45 ~ 10um, 27.67 ~ 15 um, 36.90 ~ 20um, 46.13 ~ 25um, 73.80 ~ 40 um, 92.25 ~ 50um, 138.38 ~ 75um
@@ -391,9 +315,9 @@ path_input = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_D
 path_output = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
 data_myelin = 'test_C03.tif'
 data_autofluorescence = 'test_C00.tif'
-data_frangi = 'test_C03_smooth3D_bg95_frangi.tif'
-data_otsu = 'test_C03_smooth3D_bg95_otsu.tif'
-data_cortex = 'test_C00_binMask_cortex.tif'
+data_frangi = side + 'C03_frangi.tif'
+data_otsu = side + 'C03_otsu.tif'
+data_cortex = side + 'C00_cortex.tif'
 data_bg = side + '_C03_bg.tif'
 
 
@@ -422,9 +346,9 @@ if pre_processing_total:
     otsu_mask=np.vstack(otsu_mask)
     cortex_mask=np.vstack(cortex_mask)
     # save finished dataset to output path: next step -> directionality (fiji or OrientationJ)
-    imsave(path_output+"C03_frangi.tif", frangi_data.astype('uint16'))
-    imsave(path_output+"C03_otsu.tif", otsu_mask.astype('uint16'))
-    imsave(path_output+"C00_cortex.tif", (cortex_mask).astype('uint16'))
+    imsave(path_output+side + "_" +"C03_frangi.tif", frangi_data.astype('uint16'))
+    imsave(path_output+side + "_" +"C03_otsu.tif", otsu_mask.astype('uint16'))
+    imsave(path_output+side + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
     binary = 1
 
 elif vesselness:
@@ -434,7 +358,7 @@ elif vesselness:
         f = Vesselness(bg_data[batch * batch_size:batch * batch_size + batch_size])
         frangi_data.append(f)
     frangi_data = np.vstack(frangi_data)
-    imsave(path_output + "C03_frangi.tif", frangi_data.astype('uint16'))
+    imsave(path_output + side + "_" + "C03_frangi.tif", frangi_data.astype('uint16'))
     otsu_mask = io.imread(os.path.join(path_output, data_otsu))
     cortex_mask = io.imread(os.path.join(path_output, data_cortex))
     binary = 255
@@ -459,13 +383,13 @@ if orientationJ:
             ori.to_csv(path_output+side+str(patch_size)+'_OrientationJ_'+str(i)+'_'+str(j)+'.csv', index=False)
             d.append(dom_dir)
         d = pd.DataFrame(d)
-        d.to_csv(path_output+side+str(patch_size)+'_domOrientationJ_' + str(i) + '.csv', index=False)
+        #d.to_csv(path_output+side+str(patch_size)+'_domOrientationJ_' + str(i) + '.csv', index=False)
 
     name_orientation = side + str(patch_size) + '_' + method
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
     result = directionality_analysis(otsu_mask, cortex_mask, path_output, name_orientation, batch_size, patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(path_output + 'Result'+ side + str(patch_size) + '_'+ method + '.csv')  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
+    pd.DataFrame(result).to_csv(path_output + 'Result'+ side + str(patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
 
 else:
     header = True
@@ -474,7 +398,7 @@ else:
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
     result = directionality_analysis(otsu_mask, cortex_mask, path_output, name_orientation, batch_size, patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(path_output + 'Result'+ side + str(patch_size) + '_'+ method + '.csv')
+    pd.DataFrame(result).to_csv(path_output + 'Result_'+ side + str(patch_size) + '_'+ method + '.csv', index=False)
 
 
 
@@ -502,21 +426,6 @@ if plots:
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
     plot_color2D_layerTonotopy(s, nbr_s, path_output, patch_size, method, cmap = 'PuOr', pixel = 0.542)
-
-    # polarLayer L/R :ToDo Left/Right
-    direction = result[5][0][:,0]
-    d = pd.DataFrame(np.column_stack((np.copy(direction), np.zeros((len(direction), len(layers))))))  # pd for corrected valid directionality frequencies
-    nbr_d = pd.DataFrame(np.zeros((1, len(layers))))  # pd to sample for the nbr of patches per cortex depth
-    for i in range(result.shape[0]):
-        key_layer = np.digitize(result[4][i], layers, right=False) #key position for layer I -> VI
-        d[key_layer] += result[5][i][:,1]
-        nbr_d[key_layer-1] += 1
-    plot_directionalityPolar(patch_size, d, nbr_d, d, nbr_d, method, path_output)
-    plot_nbrPatchesInCortex(patch_size, nbr_d,  nbr_d, method, path_output)
-
-
-
-
 
 
 

@@ -4,15 +4,13 @@ from fiji.analyze.directionality import Directionality_
 
 side = 'Left'
 patch_size = int(round(92.25))
-filename = 'test_C03_smooth3D_bg95_frangi' #side+'_C03_frangi.tif'
+filename = 'test_C03_smooth3D_bg95_frangi.tif' #side+'_C03_frangi.tif'
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
 name = side+str(patch_size)+'_Fiji_Directionality_'
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]
 height = img.getDimensions()[1]
-if ( (width % patch_size) != 0  ): print("Adjust patch size.")
-if ( (height % patch_size) != 0  ): print("Adjust patch size.")
 x_bound = width/patch_size
 y_bound = height/patch_size
 
