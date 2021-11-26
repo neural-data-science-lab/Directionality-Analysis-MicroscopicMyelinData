@@ -4,15 +4,18 @@ from fiji.analyze.directionality import Directionality_
 
 side = 'Left'
 patch_size = int(round(92.25))
-filename = 'test_C03_smooth3D_bg95_frangi.tif' #side+'_C03_frangi.tif'
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
-name = side+str(patch_size)+'_Fiji_Directionality_'
+filename = 'LeftPR012_l_ACx_C03_bg.tif'
+path = '/ptmp/muellerg/PR012_l_ACx/' #'/home/muellerg/nas/Gesine_Muellerg/new_substacks_gesine/PR012_l_ACx/'
+name = 'PR012_l_ACx'
+
+name_save = side+name+'_'+str(patch_size)+'_Fiji_Directionality_'
 img = IJ.openImage(path + filename)
 
 width = img.getDimensions()[0]
 height = img.getDimensions()[1]
 x_bound = width/patch_size
 y_bound = height/patch_size
+print('x0')
 
 #create patches and run directionality on them
 for i in range(x_bound):
@@ -31,8 +34,9 @@ for i in range(x_bound):
 		dir.computeHistograms()
 		dir.fitHistograms()
 		dir.displayResultsTable().show("Directionality histograms")
-		IJ.saveAs("Results", path+name+str(i)+"_"+str(j)+".csv")
-		window = name+str(i)+"_"+str(j)+".csv"
+		IJ.saveAs("Results", path+name_save+str(i)+"_"+str(j)+".csv")
+		print('x1')
+		window = name_save+str(i)+"_"+str(j)+".csv"
 		IJ.selectWindow(window)
 		IJ.run("Close")
 		

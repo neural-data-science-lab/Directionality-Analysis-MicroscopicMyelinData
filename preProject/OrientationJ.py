@@ -5,6 +5,7 @@ import skimage.io as io
 import pandas as pd
 import math
 import argparse
+import matplotlib.pyplot as plt
 
 '''parser = argparse.ArgumentParser()
 parser.add_argument('side', type=str)
@@ -60,12 +61,14 @@ name_directionality = args.side + str(args.patch_size) + '_'
 
 side = 'Left'
 patch_size = int(math.floor(92.25))
-filename = 'test_C03_smooth3D_bg95_frangi.tif'
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
+filename = 'testImage_artificial-fibers.tif'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/'
 outputpath = path+"dir_"+str(patch_size) +"/"
 name = side+str(patch_size)
 data = io.imread(path + filename)
+
 #### initialize angles as in fiji directionality plugin
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
 file = path +'dir_92/Left92' + str(0) + '_' + str(0) + '.csv'
 path_patch0 = os.path.join(path, file)
 patch0 = pd.read_csv(path_patch0, encoding = "ISO-8859-1")

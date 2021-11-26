@@ -11,8 +11,8 @@ def normalize(image):
     max_val=np.max(image)
     return (image-min_val)/(max_val-min_val)
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Testdatensatz-0504/'
-name_data = 'C03_smooth2_bg95.tif'
+path = 'E:/MasterThesis/PR012_l-ACx/'
+name_data = '11-53-16_PR012_UltraII[01 x 00]_C03_xyz-Table Z0335.ome.tif'
 path_data = os.path.join(path, name_data)
 data = io.imread(path_data)
 
