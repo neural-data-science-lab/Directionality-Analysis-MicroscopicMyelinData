@@ -249,7 +249,7 @@ def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name
     ax2 = ax1.twiny()
     ax1.set_ylabel('Tonotopic axis', fontsize=20)
     ax1.set_xlabel('Layers', fontsize=20)
-    layer_mid = np.array([0, 30, 60, 147.5, 235, 267.5, 300, 430, 560, 655, 750]) / pixel
+    layer_mid = np.array([0, 29.25, 58.5, 146.575, 234.65, 267.95, 302.25, 429.65, 557.05, 654.55, 752.05]) / pixel
     new_tick_locations = layer_mid / patch_size
     ax2.xaxis.set_ticks_position("bottom")
     ax2.xaxis.set_label_position("bottom")
@@ -279,7 +279,7 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, sl
     data = frangi_data[slice]
     X = domDir[2] * patch_size + patch_size / 2
     Y = domDir[1] * patch_size + patch_size / 2
-    angles = domDir[3] + domDir[6]  # mode orientation + correction
+    angles = domDir[3] + domDir[5]  # mode orientation + correction
     angles.loc[angles < -90] += 180  # rescale to -90° -> 90°
     angles.loc[angles > 90] -= 180
     U = np.cos(angles * np.pi / 180)
@@ -406,7 +406,7 @@ if args.plots:
         domDir = pd.DataFrame(list(domDir))
         plot_domOrientation(frangi_data, args.path, domDir, method, args.patch_size, slice[i], args.name)
 
-    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, distribution, correction factor]
+    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]
 
     # layerTonotopy
     max_dist = 752.05 / pixel

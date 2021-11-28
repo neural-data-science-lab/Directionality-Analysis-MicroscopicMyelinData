@@ -226,7 +226,7 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
 
 
 ############################################# Directionality vizualizations ##########################################
-def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, cmap = 'PuOr', pixel = 0.542):
+def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, cmap = 'PuOr', pixel = 0.5417):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -279,7 +279,7 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, sl
     data = frangi_data[slice]
     X = domDir[2] * patch_size + patch_size / 2
     Y = domDir[1] * patch_size + patch_size / 2
-    angles = domDir[3] + domDir[6]  # mode orientation + correction
+    angles = domDir[3] + domDir[5]  # mode orientation + correction
     angles.loc[angles < -90] += 180  # rescale to -90° -> 90°
     angles.loc[angles > 90] -= 180
     U = np.cos(angles * np.pi / 180)
@@ -423,7 +423,7 @@ if plots:
         domDir = pd.DataFrame(list(domDir))
         plot_domOrientation(frangi_data, path, domDir, method, patch_size, slice[i], name)
 
-    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, distribution, correction factor]
+    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]
 
     # layerTonotopy
     max_dist = 752.05 / pixel
@@ -436,7 +436,7 @@ if plots:
         key_tonotopy = result[1][i]  # key for position in tonotopic axis
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
-    plot_color2D_layerTonotopy(s, nbr_s, path, patch_size, method, cmap = 'PuOr', pixel = 0.542)
+    plot_color2D_layerTonotopy(s, nbr_s, path, patch_size, method, name, cmap = 'PuOr', pixel = 0.5417)
 
 
 
