@@ -33,13 +33,12 @@ parser.add_argument('name', type=str)
 parser.add_argument('path', type=str)
 parser.add_argument('patch_size', type=int)
 parser.add_argument('batch_size', type=int)
-parser.add_argument('pre_processing_total', type=bool)
-parser.add_argument('vesselness', type=bool)
-parser.add_argument('orientationJ', type=bool)
-parser.add_argument('Diretionality', type=bool)
-parser.add_argument('plots', type=bool)
+parser.add_argument('pre_processing_total', choices=('True','False'))
+parser.add_argument('vesselness', choices=('True','False'))
+parser.add_argument('orientationJ', choices=('True','False'))
+parser.add_argument('Directionality', choices=('True','False'))
+parser.add_argument('plots', choices=('True','False'))
 args = parser.parse_args()
-
 
 def normalize(image):
     min_val=np.min(image)
@@ -313,6 +312,15 @@ data_cortex = args.name + '_C00_cortex.tif'
 data_gauss = args.name + '_C03_gauss.tif'
 
 pixel = 0.5417  # um per pixel in x-y
+
+#to create colnames array:
+p0 = pd.read_csv(args.path + args.name+'_'+str(args.patch_size)+'_Fiji_Directionality_'+'0_0.csv', encoding = "ISO-8859-1")
+colnames = p0.keys()[1:][::2]
+colnames = colnames.insert(0,p0.keys()[0])
+c = pd.DataFrame(colnames)
+c[0][0]='Direction'
+c.to_csv(args.path+'colnamesFiji_Directionality.csv', index=False)
+
 colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
 colnames = colnames.values.astype('object')
 colnames = colnames.flatten()
@@ -321,7 +329,7 @@ layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
 
 
 ####################################################### main #########################################################
-if args.pre_processing_total:
+if args.pre_processing_total == True:
     myelin = h5py.File(os.path.join(args.path, data), 'r')[u"/t00000/s03/0/cells"]
     autofluorescence = h5py.File(os.path.join(args.path, data), 'r')[u"/t00000/s00/0/cells"]
     frangi_data = []
@@ -342,11 +350,11 @@ if args.pre_processing_total:
     imsave(args.path+args.side + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
     binary = 1
 
-elif args.vesselness:
-    bg_data = io.imread(os.path.join(args.path, data_gauss))
+elif args.vesselness == True:
+    gauss_data = io.imread(os.path.join(args.path, data_gauss))
     frangi_data = []
-    for batch in range(int(bg_data.shape[0] / args.batch_size)):
-        f = Vesselness(bg_data[batch * args.batch_size:batch * args.batch_size + args.batch_size])
+    for batch in range(int(gauss_data.shape[0] / args.batch_size)):
+        f = Vesselness(gauss_data[batch * args.batch_size:batch * args.batch_size + args.batch_size])
         frangi_data.append(f)
     frangi_data = np.vstack(frangi_data)
     imsave(args.path + args.name + "_" + "C03_frangi.tif", frangi_data.astype('uint16'))
@@ -360,7 +368,7 @@ else:
     cortex_mask = io.imread(os.path.join(args.path, data_cortex))
     binary = 255
 
-if args.orientationJ:
+if args.orientationJ == True:
     header = False
     method = 'OrientationJ_'
     x_bound = int(frangi_data.shape[2]/args.patch_size)
@@ -384,7 +392,7 @@ if args.orientationJ:
     pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.side + str(args.patch_size) + '_' + method + '.csv', index=False)
 
 
-if args.Directionality:
+if args.Directionality == True:
     header = True
     method = 'Fiji_Directionality_'
     name_orientation = args.side + str(args.patch_size) + '_' + method
@@ -398,7 +406,7 @@ if args.Directionality:
 
 
 ###################################################### main: Plots ####################################################
-if args.plots:
+if args.plots == True:
     # domOrientation
     slice = np.arange(0,frangi_data.shape[0],10)
     for i in range(len(slice)):
