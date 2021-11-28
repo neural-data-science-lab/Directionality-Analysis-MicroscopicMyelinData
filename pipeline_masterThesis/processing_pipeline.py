@@ -12,16 +12,16 @@ Creating a python pipeline spanning every step from data-preprocessing to the di
 
 import os
 import math
-import cmocean
+import h5py
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from skimage import io, feature
 from skimage.io import imsave
 from scipy import ndimage
-from scipy.ndimage import gaussian_filter, distance_transform_edt, sobel
+from scipy.ndimage import gaussian_filter, distance_transform_edt
 from scipy.ndimage.morphology import binary_fill_holes
-from skimage.filters import frangi, threshold_otsu, threshold_triangle, threshold_minimum, threshold_isodata
+from skimage.filters import frangi, threshold_otsu
 from skimage.morphology import white_tophat, disk
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -29,9 +29,8 @@ from matplotlib.colors import Normalize
 import argparse
 
 '''parser = argparse.ArgumentParser()
-parser.add_argument('side', type=str)
-parser.add_argument('path_input', type=str)
-parser.add_argument('path_output', type=str)
+parser.add_argument('name', type=str)
+parser.add_argument('path', type=str)
 parser.add_argument('patch_size', type=int)
 parser.add_argument('batch_size', type=int)
 parser.add_argument('pre_processing_total', type=bool)
@@ -142,7 +141,7 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
     (Gradient filter over distance transform)
     3. save the corrected distributions
     4. create statistics and calculate the mode in each patch
-    5. save everything to list or in case of the distribution in a pandas frame ? #todo
+    5. save everything to list or in case of the distribution in a pandas frame
 
     otsu_mask:              threshold mask -> defines valid patches
     cortex_mask:            cortex mask -> cortex curvature
@@ -227,7 +226,7 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
 
 
 ############################################# Directionality vizualizations ##########################################
-def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, cmap = 'PuOr', pixel = 0.542):
+def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, cmap = 'PuOr', pixel = 0.542):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -262,11 +261,11 @@ def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, cmap
     ax2.spines['right'].set_visible(False)
     ax2.spines['left'].set_visible(False)
 
-    plt.savefig(path_output +'Layers_tonotopy_'+side+str(patch_size)+method+'.png', dpi=180)
+    plt.savefig(path_output +'Layers_tonotopy_'+name+str(patch_size)+method+'.png', dpi=180)
     plt.close()
 
 
-def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, slice):  # cividis, PuOr,
+def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, slice, name):  # cividis, PuOr,
     '''
     Plot to have a visual validation about whether the directionality found follows the myelin structures
     :param frangi_data:     pre-processed myelin data
@@ -298,7 +297,7 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, sl
     plt.colorbar(sm, fraction=0.035)
     # ax.quiver(X, Y, U, V, color='red', units='xy')
     # save figure
-    plt.savefig(path_output + 'domOrientation_' + side +str(patch_size)+ method + 'Slice'+ str(slice) + '.png', dpi=200)
+    plt.savefig(path_output + 'domOrientation_' + name +str(patch_size)+ method + 'Slice'+ str(slice) + '.png', dpi=200)
     plt.close()
 
 
@@ -314,21 +313,22 @@ pre_processing_total = False
 vesselness = False
 orientationJ = False
 Directionality = True
-plots = False
-side = 'Left'
+plots = True
+name = 'Left'
 
-path_input = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
-path_output = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
-data_myelin = 'test_C03.tif'
-data_autofluorescence = 'test_C00.tif'
-data_frangi = side + '_C03_frangi.tif'
-data_otsu = side + '_C03_otsu.tif'
-data_cortex = side + '_C00_cortex.tif'
-data_bg = side + '_C03_bg.tif'
+#path_input = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'
+#data_myelin = 'test_C03.tif'
+#data_autofluorescence = 'test_C00.tif'
+data = name + ".h5"
+data_frangi = name + '_C03_frangi.tif'
+data_otsu = name + '_C03_otsu.tif'
+data_cortex = name + '_C00_cortex.tif'
+data_bg = name + '_C03_bg.tif'
 
 
 pixel = 0.5417  # um per pixel
-colnames = pd.read_csv(os.path.join(path_output, 'colnamesFiji_Directionality50.csv'))
+colnames = pd.read_csv(os.path.join(path, 'colnamesFiji_Directionality.csv'))
 colnames = colnames.values.astype('object')
 colnames = colnames.flatten()
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
@@ -337,8 +337,10 @@ layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
 
 ####################################################### main #########################################################
 if pre_processing_total:
-    myelin = io.imread(os.path.join(path_input, data_myelin))
-    autofluorescence = io.imread(os.path.join(path_input, data_autofluorescence))
+    #myelin = io.imread(os.path.join(path_input, data_myelin))
+    #autofluorescence = io.imread(os.path.join(path_input, data_autofluorescence))
+    myelin = h5py.File(os.path.join(path, data), 'r')[u"/t00000/s03/0/cells"]
+    autofluorescence = h5py.File(os.path.join(path, data), 'r')[u"/t00000/s00/0/cells"]
     frangi_data = []
     otsu_mask = []
     cortex_mask = []
@@ -352,27 +354,27 @@ if pre_processing_total:
     otsu_mask=np.vstack(otsu_mask)
     cortex_mask=np.vstack(cortex_mask)
     # save finished dataset to output path: next step -> directionality (fiji or OrientationJ)
-    imsave(path_output+side + "_" +"C03_frangi.tif", frangi_data.astype('uint16'))
-    imsave(path_output+side + "_" +"C03_otsu.tif", otsu_mask.astype('uint16'))
-    imsave(path_output+side + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
+    imsave(path+name + "_" +"C03_frangi.tif", frangi_data.astype('uint16'))
+    imsave(path+name + "_" +"C03_otsu.tif", otsu_mask.astype('uint16'))
+    imsave(path+name + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
     binary = 1
 
 elif vesselness:
-    bg_data = io.imread(os.path.join(path_output, data_bg))
+    bg_data = io.imread(os.path.join(path, data_bg))
     frangi_data = []
     for batch in range(int(bg_data.shape[0] / batch_size)):
         f = Vesselness(bg_data[batch * batch_size:batch * batch_size + batch_size])
         frangi_data.append(f)
     frangi_data = np.vstack(frangi_data)
-    imsave(path_output + side + "_" + "C03_frangi.tif", frangi_data.astype('uint16'))
-    otsu_mask = io.imread(os.path.join(path_output, data_otsu))
-    cortex_mask = io.imread(os.path.join(path_output, data_cortex))
+    imsave(path + name + "_" + "C03_frangi.tif", frangi_data.astype('uint16'))
+    otsu_mask = io.imread(os.path.join(path, data_otsu))
+    cortex_mask = io.imread(os.path.join(path, data_cortex))
     binary = 255
 
 else:
-    frangi_data = io.imread(os.path.join(path_output, data_frangi))
-    otsu_mask = io.imread(os.path.join(path_output, data_otsu))
-    cortex_mask = io.imread(os.path.join(path_output, data_cortex))
+    frangi_data = io.imread(os.path.join(path, data_frangi))
+    otsu_mask = io.imread(os.path.join(path, data_otsu))
+    cortex_mask = io.imread(os.path.join(path, data_cortex))
     binary = 255
 
 if orientationJ:
@@ -386,28 +388,28 @@ if orientationJ:
             patch = frangi_data[:, j*patch_size:j*patch_size+patch_size, i*patch_size:i*patch_size+patch_size]
             dom_dir, ori = OrientationJ(patch, sigma=2)
             ori = pd.DataFrame(ori)
-            ori.to_csv(path_output+side+str(patch_size)+'_OrientationJ_'+str(i)+'_'+str(j)+'.csv', index=False)
+            ori.to_csv(path+name+str(patch_size)+'_OrientationJ_'+str(i)+'_'+str(j)+'.csv', index=False)
             d.append(dom_dir)
         d = pd.DataFrame(d)
         #d.to_csv(path_output+side+str(patch_size)+'_domOrientationJ_' + str(i) + '.csv', index=False)
 
-    name_orientation = side + str(patch_size) + '_' + method
+    name_orientation = name + str(patch_size) + '_' + method
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
-    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, path_output, name_orientation, batch_size, patch_size,
+    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batch_size, patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(path_output + 'Result'+ side + str(patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
-    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(path_output + 'Distribution_' + side + str(patch_size) + '_' + method + '.csv', index=False)
+    pd.DataFrame(result).to_csv(path + 'Result'+ name + str(patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
+    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(path + 'Distribution_' + name + str(patch_size) + '_' + method + '.csv', index=False)
 
 
 if Directionality:
     header = True
     method = 'Fiji_Directionality_'
-    name_orientation = side + str(patch_size) + '_' + method
+    name_orientation = name + str(patch_size) + '_' + method
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
-    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, path_output, name_orientation, batch_size, patch_size,
+    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batch_size, patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(path_output + 'Result_'+ side + str(patch_size) + '_'+ method + '.csv', index=False)
-    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(path_output + 'Distribution_' + side + str(patch_size) + '_' + method + '.csv', index=False)
+    pd.DataFrame(result).to_csv(path + 'Result_'+ name + str(patch_size) + '_'+ method + '.csv', index=False)
+    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(path + 'Distribution_' + name + str(patch_size) + '_' + method + '.csv', index=False)
 
 
 
@@ -419,7 +421,7 @@ if plots:
     for i in range(len(slice)):
         domDir = filter(lambda c: c[0] == slice[i], result)
         domDir = pd.DataFrame(list(domDir))
-        plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, slice[i])
+        plot_domOrientation(frangi_data, path, domDir, method, patch_size, slice[i], name)
 
     result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, distribution, correction factor]
 
@@ -434,7 +436,7 @@ if plots:
         key_tonotopy = result[1][i]  # key for position in tonotopic axis
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
-    plot_color2D_layerTonotopy(s, nbr_s, path_output, patch_size, method, cmap = 'PuOr', pixel = 0.542)
+    plot_color2D_layerTonotopy(s, nbr_s, path, patch_size, method, cmap = 'PuOr', pixel = 0.542)
 
 
 
