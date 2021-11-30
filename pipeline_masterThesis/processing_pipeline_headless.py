@@ -40,6 +40,10 @@ parser.add_argument('Directionality', choices=('True','False'))
 parser.add_argument('plots', choices=('True','False'))
 args = parser.parse_args()
 
+print(args.name)
+print(args.patch_size)
+print(args.plots)
+
 def normalize(image):
     min_val=np.min(image)
     max_val=np.max(image)
@@ -87,9 +91,12 @@ def Vesselness(bg):
     '''
     frangi_data = []
     for z in range(bg.shape[0]):
-        frangi_data.append(frangi(bg[z], black_ridges=False))
+        f = frangi(bg[z], black_ridges=False)
+        #frangi_data.append(f)
+        frangi_data.append((normalize(f) * 65535).astype('uint16'))
 
-    frangi_data = np.stack((normalize(frangi_data) * 65535).astype('uint16'))
+    #frangi_data = np.stack((normalize(frangi_data) * 65535).astype('uint16'))
+    frangi_data = np.stack((frangi_data))
 
     return frangi_data
 
@@ -305,31 +312,23 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, sl
 ######################################################## MAIN ########################################################
 ######################################## define batch-size, patch-size load data #####################################
 #patch_size 18.45 ~ 10um, 27.67 ~ 15 um, 36.90 ~ 20um, 46.13 ~ 25um, 73.80 ~ 40 um, 92.25 ~ 50um, 138.38 ~ 75um
+
+print('x0-00')
+
 data = args.name + ".h5"
 data_frangi = args.name + '_C03_frangi.tif'
 data_otsu = args.name + '_C03_otsu.tif'
 data_cortex = args.name + '_C00_cortex.tif'
-data_gauss = args.name + '_C03_gauss.tif'
+data_bg = args.name + '_C03_bg.tif'
 
 pixel = 0.5417  # um per pixel in x-y
 
-#to create colnames array:
-p0 = pd.read_csv(args.path + args.name+'_'+str(args.patch_size)+'_Fiji_Directionality_'+'0_0.csv', encoding = "ISO-8859-1")
-colnames = p0.keys()[1:][::2]
-colnames = colnames.insert(0,p0.keys()[0])
-c = pd.DataFrame(colnames)
-c[0][0]='Direction'
-c.to_csv(args.path+'colnamesFiji_Directionality.csv', index=False)
+print('x0-01')
 
-colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
-colnames = colnames.values.astype('object')
-colnames = colnames.flatten()
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
 
-
-
 ####################################################### main #########################################################
-if args.pre_processing_total == True:
+if args.pre_processing_total == 'True':
     myelin = h5py.File(os.path.join(args.path, data), 'r')[u"/t00000/s03/0/cells"]
     autofluorescence = h5py.File(os.path.join(args.path, data), 'r')[u"/t00000/s00/0/cells"]
     frangi_data = []
@@ -345,16 +344,16 @@ if args.pre_processing_total == True:
     otsu_mask=np.vstack(otsu_mask)
     cortex_mask=np.vstack(cortex_mask)
     # save finished dataset to output path: next step -> directionality (fiji or OrientationJ)
-    imsave(args.path+args.side + "_" +"C03_frangi.tif", frangi_data.astype('uint16'))
-    imsave(args.path+args.side + "_" +"C03_otsu.tif", otsu_mask.astype('uint16'))
-    imsave(args.path+args.side + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
+    imsave(args.path+args.name + "_" +"C03_frangi.tif", frangi_data.astype('uint16'))
+    imsave(args.path+args.name + "_" +"C03_otsu.tif", otsu_mask.astype('uint16'))
+    imsave(args.path+args.name + "_" +"C00_cortex.tif", (cortex_mask).astype('uint16'))
     binary = 1
 
-elif args.vesselness == True:
-    gauss_data = io.imread(os.path.join(args.path, data_gauss))
+elif args.vesselness == 'True':
+    bg_data = io.imread(os.path.join(args.path, data_bg))
     frangi_data = []
-    for batch in range(int(gauss_data.shape[0] / args.batch_size)):
-        f = Vesselness(gauss_data[batch * args.batch_size:batch * args.batch_size + args.batch_size])
+    for batch in range(int(bg_data.shape[0] / args.batch_size)):
+        f = Vesselness(bg_data[batch * args.batch_size:batch * args.batch_size + args.batch_size])
         frangi_data.append(f)
     frangi_data = np.vstack(frangi_data)
     imsave(args.path + args.name + "_" + "C03_frangi.tif", frangi_data.astype('uint16'))
@@ -368,7 +367,9 @@ else:
     cortex_mask = io.imread(os.path.join(args.path, data_cortex))
     binary = 255
 
-if args.orientationJ == True:
+print('x1-00')
+
+if args.orientationJ == 'True':
     header = False
     method = 'OrientationJ_'
     x_bound = int(frangi_data.shape[2]/args.patch_size)
@@ -379,34 +380,56 @@ if args.orientationJ == True:
             patch = frangi_data[:, j*args.patch_size:j*args.patch_size+args.patch_size, i*args.patch_size:i*args.patch_size+args.patch_size]
             dom_dir, ori = OrientationJ(patch, sigma=2)
             ori = pd.DataFrame(ori)
-            ori.to_csv(args.path+args.side+str(args.patch_size)+'_OrientationJ_'+str(i)+'_'+str(j)+'.csv', index=False)
+            ori.to_csv(args.path+args.name+'_'+str(args.patch_size)+'_' + method + str(i)+'_'+str(j)+'.csv', index=False)
             d.append(dom_dir)
         d = pd.DataFrame(d)
-        #d.to_csv(path_output+side+str(patch_size)+'_domOrientationJ_' + str(i) + '.csv', index=False)
+        #d.to_csv(path_output+name+str(patch_size)+'_domOrientationJ_' + str(i) + '.csv', index=False)
 
-    name_orientation = args.side + str(args.patch_size) + '_' + method
+    #to create colnames array:
+    p0 = pd.read_csv(args.path + args.name+'_'+str(args.patch_size)+'_Fiji_Directionality_'+'0_0.csv', encoding = "ISO-8859-1")
+    colnames = p0.keys()[1:][::2]
+    colnames = colnames.insert(0,p0.keys()[0])
+    c = pd.DataFrame(colnames)
+    c[0][0]='Direction'
+    c.to_csv(args.path+'colnamesFiji_Directionality.csv', index=False)
+    colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
+    colnames = colnames.values.astype('object')
+    colnames = colnames.flatten()
+
+    name_orientation = args.name +'_'+ str(args.patch_size) + '_' + method
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
     result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, args.path, name_orientation, args.batch_size, args.patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(args.path + 'Result'+ args.side + str(args.patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
-    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.side + str(args.patch_size) + '_' + method + '.csv', index=False)
+    pd.DataFrame(result).to_csv(args.path + 'Result'+ args.name +'_'+ str(args.patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
+    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.name +'_'+ str(args.patch_size) + '_' + method + '.csv', index=False)
 
-
-if args.Directionality == True:
+print('x2-00')
+if args.Directionality == 'True':
     header = True
-    method = 'Fiji_Directionality_'
-    name_orientation = args.side + str(args.patch_size) + '_' + method
+    method = 'Fiji_Directionality-gauss_'
+    name_orientation = args.name +'_'+ str(args.patch_size) + '_' + method
+    #to create colnames array:
+    p0 = pd.read_csv(args.path + args.name+'_'+str(args.patch_size)+'_'+method+'0_0.csv', encoding = "ISO-8859-1")  
+    colnames = p0.keys()[1:][::2]
+    colnames = colnames.insert(0,p0.keys()[0])
+    c = pd.DataFrame(colnames)
+    c[0][0]='Direction'
+    c.to_csv(args.path+'colnamesFiji_Directionality.csv', index=False)
+    colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
+    colnames = colnames.values.astype('object')
+    colnames = colnames.flatten()
+
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
     result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, args.path, name_orientation, args.batch_size, args.patch_size,
                                      colnames, header, binary, pixel=0.5417)
-    pd.DataFrame(result).to_csv(args.path + 'Result_'+ args.side + str(args.patch_size) + '_'+ method + '.csv', index=False)
-    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.side + str(args.patch_size) + '_' + method + '.csv', index=False)
+    pd.DataFrame(result).to_csv(args.path + 'Result_'+ args.name +'_'+ str(args.patch_size) + '_'+ method + '.csv', index=False)
+    pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.name +'_'+ str(args.patch_size) + '_' + method + '.csv', index=False)
 
 
 
-
+print('x3-00')
 ###################################################### main: Plots ####################################################
-if args.plots == True:
+if args.plots == 'True':
     # domOrientation
     slice = np.arange(0,frangi_data.shape[0],10)
     for i in range(len(slice)):
@@ -415,7 +438,7 @@ if args.plots == True:
         plot_domOrientation(frangi_data, args.path, domDir, method, args.patch_size, slice[i], args.name)
 
     result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]
-
+    print('x3-01')
     # layerTonotopy
     max_dist = 752.05 / pixel
     x_resolution = np.arange(0, max_dist-args.patch_size, args.patch_size)
@@ -428,3 +451,4 @@ if args.plots == True:
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
     plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, cmap = 'PuOr', pixel = 0.5417)
+print('end')
