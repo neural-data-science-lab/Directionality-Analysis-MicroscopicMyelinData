@@ -14,4 +14,4 @@ ls |  grep Z0[6][2][0-5].ome* | xargs -I '{}' cp '{}'  ~/nas/Gesine_Muellerg/new
 
 cd "/home/muellerg/nas/Gesine_Muellerg"
 # resave datset as hdf5
-#~/Downloads/fiji-linux64/Fiji.app/./ImageJ-linux64 --headless --console -macro HDF5_defineDataset.ijm "$nameOut /home/muellerg/nas/Gesine_Muellerg/new_substacks_gesine/$nameOut/"
+~/Downloads/fiji-linux64/Fiji.app/./ImageJ-linux64 --headless --console -macro HDF5_defineDataset.ijm "$nameOut /home/muellerg/nas/Gesine_Muellerg/new_substacks_gesine/$nameOut/"

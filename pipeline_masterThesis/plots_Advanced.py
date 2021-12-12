@@ -154,7 +154,7 @@ def plot_color2D_layerTonotopy(data, path_output, patch_size, side, cmap = 'Oran
 
 ################  MAIN
 pixel = 0.5417  # um per pixel
-side = ['Left', 'Right']
+side = ['Left', 'Left']
 patch_size = int(round(92.25))
 method = ['Fiji_Directionality_', 'OrientationJ_']
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Analyse_Directionality/Testdatensatz-0504/test/Pipeline/'

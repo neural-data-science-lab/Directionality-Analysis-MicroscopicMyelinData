@@ -54,7 +54,7 @@ run("Fuse dataset ...",
     "subsampling_factors=[{ {1,1,1}, {2,2,1}, {4,4,1}, {8,8,1}, {16,16,2}, {32,32,4}, {64,64,8} }] " +
 	"hdf5_chunk_sizes=[{ {32,32,4}, {32,32,4}, {32,16,8}, {16,16,16}, {16,16,16}, {16,16,16}, {16,16,16} }] timepoints_per_partition=1 " +
 	"setups_per_partition=0 use_deflate_compression " +
-    "export_path=" + path + name);
+    "export_path=" + path + name + "-f0");
 
 
 // quit after we are finished
