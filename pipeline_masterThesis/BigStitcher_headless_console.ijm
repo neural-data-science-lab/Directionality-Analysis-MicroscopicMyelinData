@@ -11,19 +11,19 @@ name = args[1];
 
 
 // define dataset
-//run("Define dataset ...",
-//    "define_dataset=[Automatic Loader (Bioformats based)]" +
-//    " project_filename="+name+".xml path=" + path + "*.tif exclude=10" +
-//    " bioformats_channels_are?=Channels pattern_0=Tiles pattern_1=Tiles modify_voxel_size? voxel_size_x=0.541667" +
-//    " voxel_size_y=0.541667 voxel_size_z=6 voxel_size_unit=um " +
-//    "move_tiles_to_grid_(per_angle)?=[Move Tile to Grid (Macro-scriptable)] grid_type=[Grid: row-by-row      ]" +
-//    " tiles_x=8 tiles_y=3 tiles_z=1 overlap_x_(%)=20 overlap_y_(%)=20 overlap_z_(%)=20" +
-//    " keep_metadata_rotation how_to_load_images=[Re-save as multiresolution HDF5] " +
-//    "dataset_save_path=" + path +
-//    "subsampling_factors=[{ {1,1,1}, {2,2,1}, {4,4,1}, {8,8,1}, {16,16,2}, {32,32,4}, {64,64,8} }] " + 
-//    "hdf5_chunk_sizes=[{ {32,32,4}, {32,32,4}, {32,16,8}, {16,16,16}, {16,16,16}, {16,16,16}, {16,16,16} }] " +
-//    "timepoints_per_partition=1 setups_per_partition=0 use_deflate_compression " +
-//    "export_path=" + path + name);
+run("Define dataset ...",
+    "define_dataset=[Automatic Loader (Bioformats based)]" +
+    " project_filename="+name+".xml path=" + path + "*.tif exclude=10" +
+    " bioformats_channels_are?=Channels pattern_0=Tiles pattern_1=Tiles modify_voxel_size? voxel_size_x=0.541667" +
+    " voxel_size_y=0.541667 voxel_size_z=6 voxel_size_unit=um " +
+    "move_tiles_to_grid_(per_angle)?=[Move Tile to Grid (Macro-scriptable)] grid_type=[Grid: row-by-row      ]" +
+    " tiles_x=8 tiles_y=3 tiles_z=1 overlap_x_(%)=20 overlap_y_(%)=20 overlap_z_(%)=20" +
+    " keep_metadata_rotation how_to_load_images=[Re-save as multiresolution HDF5] " +
+    "dataset_save_path=" + path +
+    "subsampling_factors=[{ {1,1,1}, {2,2,1}, {4,4,1}, {8,8,1}, {16,16,2}, {32,32,4}, {64,64,8} }] " + 
+    "hdf5_chunk_sizes=[{ {32,32,4}, {32,32,4}, {32,16,8}, {16,16,16}, {16,16,16}, {16,16,16}, {16,16,16} }] " +
+    "timepoints_per_partition=1 setups_per_partition=0 use_deflate_compression " +
+    "export_path=" + path + name);
 
 // calculate pairwise shifts
 run("Calculate pairwise shifts ...",

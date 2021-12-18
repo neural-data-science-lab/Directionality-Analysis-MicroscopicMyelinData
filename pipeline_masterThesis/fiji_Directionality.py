@@ -9,6 +9,8 @@ from fiji.analyze.directionality import Directionality_
 
 name_save = name+'_'+str(patch_size)+'_Fiji_Directionality_'
 img = IJ.openImage(path + filename)
+img.setRoi(x_start, y_start, x_end, y_end)
+IJ.run(img, "Crop", "")
 
 width = img.getDimensions()[0]
 height = img.getDimensions()[1]

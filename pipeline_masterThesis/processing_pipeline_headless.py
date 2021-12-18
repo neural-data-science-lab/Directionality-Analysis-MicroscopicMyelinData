@@ -38,6 +38,12 @@ parser.add_argument('vesselness', choices=('True','False'))
 parser.add_argument('orientationJ', choices=('True','False'))
 parser.add_argument('Directionality', choices=('True','False'))
 parser.add_argument('plots', choices=('True','False'))
+parser.add_argument('x_start', type=int)
+parser.add_argument('y_start', type=int)
+parser.add_argument('z_start', type=int)
+parser.add_argument('x_end', type=int)
+parser.add_argument('y_end', type=int)
+parser.add_argument('z_end', type=int)
 args = parser.parse_args()
 
 print(args.name)
@@ -137,8 +143,8 @@ def OrientationJ(patch, sigma=2):
 
 
 ################################################ Directionality analsis #############################################
-def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batch_size, patch_size, colnames,
-                                  header, binary, pixel=0.5417):
+def directionality_analysis(cortex_mask, path, name_orientation, batch_size, patch_size, colnames,
+                                  header, binary, z_start, pixel=0.5417):
     '''
     function to:
     1. extract all valid patches in the sense that based on a binary mask only those orientation patches are valid in
@@ -175,7 +181,7 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
     if not header:
         patch0.columns = colnames
     else:
-        patch0.rename(columns={'Direction (°)': 'Direction'}, inplace=True)
+        patch0.rename(columns={'Direction (?)': 'Direction'}, inplace=True)
     direction = patch0['Direction']
 
     result = []
@@ -202,14 +208,14 @@ def directionality_analysis(otsu_mask, cortex_mask, path, name_orientation, batc
                 if not header:
                     patch.columns = colnames
                 else:
-                    patch.rename(columns={'Direction (°)': 'Direction'}, inplace=True) #�
+                    patch.rename(columns={'Direction (?)': 'Direction'}, inplace=True) #�
 
-                x = np.arange(batch * batch_size, batch * batch_size + batch_size, 1) #z-slices according to batch to be considered
+                x = np.arange(z_start + batch * batch_size, z_start + batch * batch_size + batch_size, 1) #z-slices according to batch to be considered
                 for k, v in enumerate(x):
-                    patch_otsu = otsu_mask[v, j * patch_size:j * patch_size + patch_size,
-                                 i * patch_size:i * patch_size + patch_size]
+                    #patch_otsu = otsu_mask[v, j * patch_size:j * patch_size + patch_size,
+                                 #i * patch_size:i * patch_size + patch_size]
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-                    if binary in patch_otsu and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v + 1)])) == False: #255 for mask fiji  else 1
+                    if cortexDepth > 0 and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v + 1)])) == False: #binary in patch_otsu and
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
@@ -362,9 +368,9 @@ elif args.vesselness == 'True':
     binary = 255
 
 else:
-    frangi_data = io.imread(os.path.join(args.path, data_frangi))
-    otsu_mask = io.imread(os.path.join(args.path, data_otsu))
-    cortex_mask = io.imread(os.path.join(args.path, data_cortex))
+    frangi_data = io.imread(os.path.join(args.path, data_bg))[args.z_start:args.z_end, args.y_start:args.y_end, args.x_start:args.x_end] # !!! changed to data_bg
+    #otsu_mask = io.imread(os.path.join(args.path, data_otsu))[args.z_start:args.z_end, args.y_start:args.y_end, args.x_start:args.x_end]
+    cortex_mask = io.imread(os.path.join(args.path, data_cortex))[args.z_start:args.z_end, args.y_start:args.y_end, args.x_start:args.x_end]
     binary = 255
 
 print('x1-00')
@@ -395,18 +401,21 @@ if args.orientationJ == 'True':
     colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
     colnames = colnames.values.astype('object')
     colnames = colnames.flatten()
+    colnames_dir = colnames[0]
+    colnames = colnames[args.z_start:args.z_end]
+    colnames = np.insert(colnames,0,colnames_dir)
 
     name_orientation = args.name +'_'+ str(args.patch_size) + '_' + method
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
-    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, args.path, name_orientation, args.batch_size, args.patch_size,
-                                     colnames, header, binary, pixel=0.5417)
+    result, distribution_corrected = directionality_analysis(cortex_mask, args.path, name_orientation, args.batch_size,
+                                                             args.patch_size, colnames, header, binary, args.z_start, pixel=0.5417)
     pd.DataFrame(result).to_csv(args.path + 'Result'+ args.name +'_'+ str(args.patch_size) + '_'+ method + '.csv', index=False)  # test = pd.read_csv(path_output+ method + 'result.csv', encoding = "ISO-8859-1")
     pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.name +'_'+ str(args.patch_size) + '_' + method + '.csv', index=False)
 
 print('x2-00')
 if args.Directionality == 'True':
     header = True
-    method = 'Fiji_Directionality-gauss_'
+    method = 'Fiji_Directionality_'
     name_orientation = args.name +'_'+ str(args.patch_size) + '_' + method
     #to create colnames array:
     p0 = pd.read_csv(args.path + args.name+'_'+str(args.patch_size)+'_'+method+'0_0.csv', encoding = "ISO-8859-1")  
@@ -418,10 +427,13 @@ if args.Directionality == 'True':
     colnames = pd.read_csv(os.path.join(args.path, 'colnamesFiji_Directionality.csv'))
     colnames = colnames.values.astype('object')
     colnames = colnames.flatten()
+    colnames_dir = colnames[0]
+    colnames = colnames[args.z_start:args.z_end]
+    colnames = np.insert(colnames, 0, colnames_dir)
 
     # [position in dataset (k,j,i), dominant direction, cortex depth, distribution, correction factor for cortex normal]
-    result, distribution_corrected = directionality_analysis(otsu_mask, cortex_mask, args.path, name_orientation, args.batch_size, args.patch_size,
-                                     colnames, header, binary, pixel=0.5417)
+    result, distribution_corrected = directionality_analysis(cortex_mask, args.path, name_orientation, args.batch_size,
+                                                             args.patch_size, colnames, header, binary, args.z_start, pixel=0.5417)
     pd.DataFrame(result).to_csv(args.path + 'Result_'+ args.name +'_'+ str(args.patch_size) + '_'+ method + '.csv', index=False)
     pd.DataFrame(np.stack(distribution_corrected, axis = 1)).to_csv(args.path + 'Distribution_' + args.name +'_'+ str(args.patch_size) + '_' + method + '.csv', index=False)
 
@@ -431,7 +443,7 @@ print('x3-00')
 ###################################################### main: Plots ####################################################
 if args.plots == 'True':
     # domOrientation
-    slice = np.arange(0,frangi_data.shape[0],10)
+    slice = np.arange(args.z_start,frangi_data.shape[0],10)
     for i in range(len(slice)):
         domDir = filter(lambda c: c[0] == slice[i], result)
         domDir = pd.DataFrame(list(domDir))
