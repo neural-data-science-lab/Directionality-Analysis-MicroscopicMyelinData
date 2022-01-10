@@ -5,54 +5,56 @@ library(NISTunits)
 library(tibble)
 
 #### read in data
-data <- read.csv("/ptmp/muellerg/Result_Fiji_92.csv")
-colnames(data)<-c("sampleID","side","layer","z","y","x", "domDir","cortexDepth","correction") 
-dataL1<-data[!(data$layer=="L1"),]
+data <- read.csv("/ptmp/muellerg/Result_Fiji_92_mode-short.csv")
+colnames(data)<-c("sampleID","side","layer","y","domDir","count_per_av")
+dat<-data[!(data$layer=="L1"),] 
+
 data$sampleID <- as.factor(data$sampleID)
+dat_<-data[!(data$layer=="L1"),] 
 
-data_L1<-data[!(data$layer=="L1"),]
-data_L1L6<-data[!(data$layer=="L1" | data$layer=="L6"),]
-attach(data_L1)
+##### reorganize data for bpnme
+#dataL1
+attach(dat_)
+dat$domDir <- NISTdegTOradian(dat$domDir)
+dat$side <- as.factor(dat$side)
+dat$layer <- as.factor(dat$layer)
+dat$sampleID <- as.numeric(dat$sampleID)
+dat$side <- as.numeric(dat$side)
+dat$layer <- as.numeric(dat$layer)
+colnames(dat)<-c("sampleID","side_num","layer_num","y", "domDir","count_per_av") 
+dat<-add_column(dat, side, .before = "side_num")
+dat<-add_column(dat, layer, .before = "layer_num")
+dat$side_num <- as.factor(dat$side_num)
+dat$layer_num <- as.factor(dat$layer_num)
+detach(dat_)
+attach(dat)
 
-dataL1$domDir <- NISTdegTOradian(dataL1$domDir)
-dataL1$side <- as.factor(dataL1$side)
-dataL1$layer <- as.factor(dataL1$layer)
-dataL1$sampleID <- as.numeric(dataL1$sampleID)
-dataL1$side <- as.numeric(dataL1$side)
-dataL1$layer <- as.numeric(dataL1$layer)
-colnames(dataL1)<-c("sampleID","side_num","layer_num","z","y","x", "domDir","cortexDepth","correction") 
-dataL1<-add_column(dataL1, side, .before = "side_num")
-dataL1<-add_column(dataL1, layer, .before = "layer_num")
-dataL1$side_num <- as.factor(dataL1$side_num)
-dataL1$layer_num <- as.factor(dataL1$layer_num)
-detach(data_L1)
-attach(dataL1)
 
 # Model comparison: bottom-up, 1. Model fit, 2. explained variance (part of random effect variances)
 #Intercept-only model: only a fixed and random intercepts
-fit.dataL1_IO = bpnme(pred.I = domDir ~ (1|sampleID),
-                      data = dataL1,
-                      its = 10000, burn = 1000, n.lag = 3, seed = 101)
-save(fit.dataL1_IO, file = "/ptmp/muellerg/fit.dataL1_IO.rda")
+fit.mode_bpnme_IO = bpnme(pred.I = domDir ~ (1|sampleID),
+                      data = dat,
+                      its = 20000, burn = 3500, n.lag = 1, seed = 101)
+save(fit.mode_bpnme_IO, file = "/ptmp/muellerg/fit.mode_bpnme_IOAll.rda")
+gc()
 
 #include fixed-effects, simplest within-subject factors
-fit.dataL1_1p = bpnme(pred.I = domDir ~ side_num + (1|sampleID),
-                      data = dataL1,
-                      its = 10000, burn = 1000, n.lag = 3, seed = 101)
-save(fit.dataL1_1p, file = "/ptmp/muellerg/fit.dataL1_1p.rda")
+fit.mode_bpnme_1p = bpnme(pred.I = domDir ~ side_num + (1|sampleID),
+                          data = dat,
+                          its = 20000, burn = 3500, n.lag = 1, seed = 101)
+save(fit.mode_bpnme_1p, file = "/ptmp/muellerg/fit.mode_bpnme_1pAll.rda")
+gc()
 
 #include further higher-level factors e.g. between-subject factors
-fit.dataL1_2p = bpnme(pred.I = domDir ~ side_num + layer_num + (1|sampleID),
-                      data = dataL1,
-                      its = 10000, burn = 1000, n.lag = 3, seed = 101)
-save(fit.dataL1_2p, file = "/ptmp/muellerg/fit.dataL1_2p.rda")
+fit.mode_bpnme_2p = bpnme(pred.I = domDir ~ side_num + layer_num + (1|sampleID),
+                         data = dat,
+                         its = 20000, burn = 3500, n.lag = 1, seed = 101)
+save(fit.mode_bpnme_2p, file = "/ptmp/muellerg/fit.mode_bpnme_2pAll.rda")
+gc()
 
-fit.dataL1_3p = bpnme(pred.I = domDir ~ side_num + layer_num y + (1|sampleID),
-                      data = dataL1,
-                      its = 10000, burn = 1000, n.lag = 3, seed = 101)
-save(fit.dataL1_3p, file = "/ptmp/muellerg/fit.dataL1_3p.rda")
-
-#adding random slopes for 1st level predictors or cross-level interactions
-
-
+fit.mode_bpnme_3p = bpnme(pred.I = domDir ~ side_num + layer_num + y + (1|sampleID),
+                         data = dat,
+                         its = 20000, burn = 3500, n.lag = 1, seed = 101)
+save(fit.mode_bpnme_3p, file = "/ptmp/muellerg/fit.mode_bpnme_3pAll.rda")
+gc()
 

@@ -301,18 +301,19 @@ def plot_domOrientation(frangi_data, path_output, domDir, method, patch_size, id
     colors = np.array(np.arctan2(V, U))
     norm = Normalize()
     norm.autoscale(colors)
-    colormap = cm.PuOr
+    colormap = cm.twilight
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     ax.imshow(data, cmap="Greys")
     ax.quiver(X, Y, U, V, color=colormap(norm(colors)), units='xy', linewidths=12)
     norm.autoscale(np.array(angles))
-    sm = plt.cm.ScalarMappable(cmap='PuOr', norm=norm)
+    sm = plt.cm.ScalarMappable(cmap='twilight', norm=norm)
     sm.set_array([])
     plt.colorbar(sm, fraction=0.035)
     # ax.quiver(X, Y, U, V, color='red', units='xy')
     # save figure
     plt.savefig(path_output + 'domOrientation_' + name +str(patch_size)+ method + 'Slice'+ str(id) + '.png', dpi=200)
     plt.close()
+
 
 
 

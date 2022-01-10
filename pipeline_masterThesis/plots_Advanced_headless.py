@@ -13,10 +13,14 @@ import matplotlib.pyplot as plt
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('name', type=str)
-parser.add_argument('path', type=str)
-parser.add_argument('patch_size', type=int)
+#parser.add_argument('name', type=str)
+#parser.add_argument('path', type=str)
+#parser.add_argument('patch_size', type=int)
 args = parser.parse_args()
+
+args.name = 'PR009'
+args.path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/'
+args.patch_size = 92
 
 def layer(result, distribution, layers):
     direction = pd.DataFrame(distribution['0'])
@@ -175,7 +179,7 @@ for i in range(len(method)):
     distribution_left = pd.read_csv(args.path + side[0] + '/' + 'Distribution_'+ side[0] +'_'+ str(patch_size) + '_'+ method[i] + '.csv', encoding = "ISO-8859-1")
     distribution_right = pd.read_csv(args.path + side[1] + '/' + 'Distribution_'+ side[1] +'_'+ str(patch_size) + '_'+ method[i] + '.csv', encoding = "ISO-8859-1")
     d_l, nbr_l = layer(result_left, distribution_left, layers)
-    d_r, nbr_r = layer(result_left, distribution_right, layers)
+    d_r, nbr_r = layer(result_right, distribution_right, layers)
     plot_directionalityPolar(patch_size, d_l, d_r, method[i], args.path)
     plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, method[i], args.path)
 
