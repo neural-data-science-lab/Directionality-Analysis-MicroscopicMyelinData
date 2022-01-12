@@ -127,9 +127,9 @@ open_path = r"C:\Users\Gesine\Documents\Studium\MasterCMS\MasterThesis\Analyse_D
 ### tuple of image names to be processed
 img_names = (r"\C01.tif",)  # images with structures to be annotated
 
-save_path = r"D:C:\Users\Gesine\Documents\Studium\MasterCMS\MasterThesis\Analyse_Directionality\Testdatensatz-0504"  # path to results folder
+save_path = r"C:\Users\Gesine\Documents\Studium\MasterCMS\MasterThesis\Analyse_Directionality\Testdatensatz-0504\coluumn_sandbox"  # path to results folder
 checkprogress = 5  # check progress of script every x batches
-batch_shape = (150, 512, 432)  # shape (Z,Y,X) of the batches being processed. Larger is faster but also requires more RAM. Use even numbers
+batch_shape = (50, 512, 432)  # shape (Z,Y,X) of the batches being processed. Larger is faster but also requires more RAM. Use even numbers
 h5 = False  # is the input image h5? no = tif
 
 ### variables that will need tweaking depending on the image being processed
@@ -139,13 +139,13 @@ hucd = True  # True means HuCD data. False means Topro data.
 
 ### gabor filter variables. need to be adapted to cell size, data & quality
 if hucd == True:
-    edge = 40  # gabor kernel edge length (x=y=z)
+    edge = 10#40  # gabor kernel edge length (x=y=z)
     gabor_freq = 1 / 10  # frequency of wave component
     gabor_phase = 3.7  # wave component offset
     gabor_sigma = 8  # gaussian deviation #7
     gabor_radius = 9  # donut radius       #10
     z_factor = 7  # factor of how much the z axis is compressed in microscopy data. 1 for isotropic data
-    tissue_thresh = 530  # intensity threshold to check cells are in tissue
+    tissue_thresh = 315#530  # intensity threshold to check cells are in tissue
     r_maxima = 6  # radius of footprint for detecting local maxima in the gabor filtered image #6
     min_distance = 4  # min distance between local maxima #4
 
@@ -282,10 +282,10 @@ for img_name in img_names:  # execute for all images in list. Must be inside dir
             indices=False,
             footprint=footprint_maxima,
             exclude_border=0,
-        )
+        ) # centers = peak_local_max(gaborimg_real, min_distance, footprint=footprint_maxima, exclude_border=0, indices=False)
 
         # threshold centers according to tissue background intensity
-        centers[gaussed_img < tissue_thresh] = 0
+        centers[gaussed_img < tissue_thresh] = 0  #? only one gaussed_img < tissue_thresh == False
 
         # crop center coordinates image to valid part
         centers = centers[edge // 2:-edge // 2, edge // 2:-edge // 2, edge // 2:-edge // 2]
