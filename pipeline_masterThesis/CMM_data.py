@@ -14,13 +14,13 @@ import matplotlib.pyplot as plt
 
 
 #### construct a csv such that all result data is in one file -> add l/r and sampleID
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/'
 pixel = 0.5417
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel
 layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
 
 Result_Fiji = []
-sample = ['09','12','14','17','18']
+sample = ['09','12','14','17']
 side = ['l', 'r']
 for i in sample:
     for j in side:
@@ -62,7 +62,7 @@ data_long = pd.read_csv(os.path.join(path, 'Result_Fiji_92.csv'))
 layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
 
 result = []
-for sampleId in [9,12,14,17,18]:
+for sampleId in [9,12,14,17]:
     for side in ['l', 'r']:
         data = data_long[(data_long['0'] == sampleId) & (data_long['1']== side)]
         for layer_id in layer_ids:

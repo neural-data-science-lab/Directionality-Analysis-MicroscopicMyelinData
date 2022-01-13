@@ -22,6 +22,7 @@ from matplotlib.colors import Normalize
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument('side', type=str)
 parser.add_argument('name', type=str)
 parser.add_argument('path', type=str)
 parser.add_argument('patch_size', type=int)
@@ -29,7 +30,7 @@ parser.add_argument('batch_size', type=int)
 parser.add_argument('orientationJ', choices=('True','False'))
 parser.add_argument('Directionality', choices=('True','False'))
 parser.add_argument('plots', choices=('True','False'))
-parser.add_argument('cortex_corr_start', type=int)
+parser.add_argument('cortex_corr_start', type=int) # given in um, needed in px
 parser.add_argument('cortex_corr_end', type=int)
 parser.add_argument('x_start', type=int)
 parser.add_argument('y_start', type=int)
@@ -114,16 +115,33 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
     max_dist = 752.05 / pixel
 
     #correct cortex mask
-    correction_factor = np.arange(abs(args.cortex_corr_start), abs(args.cortex_corr_end),
-                                  (abs(args.cortex_corr_end) - abs(args.cortex_corr_start))/depth)
-    for i in range(depth):
-        if args.cortex_corr_start < 0 and args.cortex_corr_end < 0:
-            cortex_mask[i] = np.concatenate((cortex_mask[i][:,int(correction_factor[i]):width],
-                                             np.ones((height,int(correction_factor[i])))), axis = 1) #increase mask
-            cortex_mask[i][np.where(cortex_mask[i] == 1)] = 255
-        else:
-            cortex_mask[i] = np.concatenate((np.zeros((height, int(correction_factor[i]))),
-                                             cortex_mask[i][:, 0:(width - int(correction_factor[i]))]), axis=1) #decrease mask
+    if args.side == 'left':
+        cortex_corr_start = args.cortex_corr_start/pixel
+        cortex_corr_end = args.cortex_corr_end/pixel
+        correction_factor = np.arange(abs(cortex_corr_start), abs(cortex_corr_end),
+                                      (abs(cortex_corr_end) - abs(cortex_corr_start))/depth)
+        for i in range(depth):
+            if args.cortex_corr_start < 0 and args.cortex_corr_end < 0:
+                cortex_mask[i] = np.concatenate((cortex_mask[i][:,int(correction_factor[i]):width],
+                                                 np.ones((height,int(correction_factor[i])))), axis = 1) #increase mask
+                cortex_mask[i][np.where(cortex_mask[i] == 1)] = 255
+            else:
+                cortex_mask[i] = np.concatenate((np.zeros((height, int(correction_factor[i]))),
+                                                 cortex_mask[i][:, 0:(width - int(correction_factor[i]))]), axis=1) #decrease mask
+    else:
+        cortex_corr_start = args.cortex_corr_start / pixel
+        cortex_corr_end = args.cortex_corr_end / pixel
+        correction_factor = np.arange(abs(cortex_corr_start), abs(cortex_corr_end),
+                                      (abs(cortex_corr_end) - abs(cortex_corr_start)) / depth)
+        for i in range(depth):
+            if args.cortex_corr_start < 0 and args.cortex_corr_end < 0:
+                cortex_mask[i] = np.concatenate((np.ones((height, int(correction_factor[i]))),
+                                                         cortex_mask[i][:, 0:(width - int(correction_factor[i]))]), axis=1)  # increase mask
+                cortex_mask[i][np.where(cortex_mask[i] == 1)] = 255
+            else:
+                cortex_mask[i] = np.concatenate((cortex_mask[i][:, int(correction_factor[i]):width],
+                                                 np.zeros((height, int(correction_factor[i])))), axis=1)  # decrease mask
+
 
     # initialize the sum over the directionality
     file = name_orientation + str(0) + '_' + str(0) + '.csv'
@@ -168,7 +186,10 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
-                        correction = 90 - angle_cortex
+                        if args.side == 'left':
+                            correction = 90 - angle_cortex
+                        else:
+                            correction = -90 - angle_cortex
                         direction_corrected = patch['Direction'] - correction
                         # shift angles < -90 and > 90 degrees back into -90 to 90 range
                         patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(v)]], axis=1)
@@ -377,7 +398,7 @@ if args.plots == 'True':
         key_tonotopy = result[1][i]  # key for position in tonotopic axis
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
-    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = True, cmap = 'PuOr', pixel = 0.5417)
-    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = False, cmap = 'PuOr', pixel = 0.5417)
+    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = True, cmap = 'twilight_r', pixel = 0.5417)
+    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = False, cmap = 'twilight_r', pixel = 0.5417)
 print('end')
 
