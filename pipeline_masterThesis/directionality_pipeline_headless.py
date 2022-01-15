@@ -49,6 +49,9 @@ def normalize(image):
     max_val=np.max(image)
     return (image-min_val)/(max_val-min_val)
 
+def Convert(lst):
+    return [ -i for i in lst ]
+
 
 ################################### Orientation distribution (Fiji or Py here) #########################################
 def OrientationJ(patch, sigma=2):
@@ -115,7 +118,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
     max_dist = 752.05 / pixel
 
     #correct cortex mask
-    if args.side == 'left':
+    if args.side == 'l':
         cortex_corr_start = args.cortex_corr_start/pixel
         cortex_corr_end = args.cortex_corr_end/pixel
         correction_factor = np.arange(abs(cortex_corr_start), abs(cortex_corr_end),
@@ -186,7 +189,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
-                        if args.side == 'left':
+                        if args.side == 'l':
                             correction = 90 - angle_cortex
                         else:
                             correction = -90 - angle_cortex
@@ -201,6 +204,10 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                             idx = (np.abs(distribution[:,0] - patch_shifted['Direction'][row])).argmin()
                             distribution[idx,1] = patch_shifted['Slice_' + str(v)][row]
                         domDir = distribution[distribution[:, 1].argmax(), 0]  #get mode of directions in patch
+                        if args.side == 'l':
+                            domDir = Convert(domDir)
+                            distribution[:, 0] = distribution[:, 0]*(-1)
+                            distribution = distribution[distribution[:,0].argsort()]
                         result.append(np.array([v, j, i, domDir, cortexDepth, correction]))
                         distribution_corrected.append(distribution[:, 1])
     return result, distribution_corrected

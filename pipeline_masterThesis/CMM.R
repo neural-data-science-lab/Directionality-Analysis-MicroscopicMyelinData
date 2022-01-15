@@ -32,29 +32,29 @@ attach(dat)
 
 # Model comparison: bottom-up, 1. Model fit, 2. explained variance (part of random effect variances)
 #Intercept-only model: only a fixed and random intercepts
-fit.mode_bpnme_IO = bpnme(pred.I = domDir ~ (1|sampleID),
+fit.bpnme_IO_2 = bpnme(pred.I = domDir ~ (1|sampleID),
                       data = dat,
-                      its = 20000, burn = 3500, n.lag = 1, seed = 101)
-save(fit.mode_bpnme_IO, file = "/ptmp/muellerg/fit.mode_bpnme_IOAll.rda")
+                      its = 20000, burn = 3500, n.lag = 2, seed = 101)
+save(fit.bpnme_IO_2, file = "/ptmp/muellerg/fit.bpnme_IO_2.rda")
 gc()
 
 #include fixed-effects, simplest within-subject factors
-fit.mode_bpnme_1p = bpnme(pred.I = domDir ~ side_num + (1|sampleID),
+fit.bpnme_1p_2 = bpnme(pred.I = domDir ~ side_num + (1|sampleID),
                           data = dat,
-                          its = 20000, burn = 3500, n.lag = 1, seed = 101)
-save(fit.mode_bpnme_1p, file = "/ptmp/muellerg/fit.mode_bpnme_1pAll.rda")
+                          its = 20000, burn = 3500, n.lag = 2, seed = 101)
+save(fit.bpnme_1p_2, file = "/ptmp/muellerg/fit.bpnme_1p_2.rda")
 gc()
 
 #include further higher-level factors e.g. between-subject factors
-fit.mode_bpnme_2p = bpnme(pred.I = domDir ~ side_num + layer_num + (1|sampleID),
+fit.bpnme_2p_2 = bpnme(pred.I = domDir ~ side_num + layer_num + (1|sampleID),
                          data = dat,
-                         its = 20000, burn = 3500, n.lag = 1, seed = 101)
-save(fit.mode_bpnme_2p, file = "/ptmp/muellerg/fit.mode_bpnme_2pAll.rda")
+                         its = 20000, burn = 3500, n.lag = 2, seed = 101)
+save(fit.bpnme_2p_2, file = "/ptmp/muellerg/fit.bpnme_2p_2.rda")
 gc()
 
-fit.mode_bpnme_3p = bpnme(pred.I = domDir ~ side_num + layer_num + y + (1|sampleID),
+fit.bpnme_3p_2 = bpnme(pred.I = domDir ~ side_num + layer_num + y + (1|sampleID),
                          data = dat,
-                         its = 20000, burn = 3500, n.lag = 1, seed = 101)
-save(fit.mode_bpnme_3p, file = "/ptmp/muellerg/fit.mode_bpnme_3pAll.rda")
+                         its = 20000, burn = 3500, n.lag = 2, seed = 101)
+save(fit.bpnme_3p_2, file = "/ptmp/muellerg/fit.bpnme_3p_2.rda")
 gc()
 

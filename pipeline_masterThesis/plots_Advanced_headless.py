@@ -13,14 +13,10 @@ import matplotlib.pyplot as plt
 import argparse
 
 parser = argparse.ArgumentParser()
-#parser.add_argument('name', type=str)
-#parser.add_argument('path', type=str)
-#parser.add_argument('patch_size', type=int)
+parser.add_argument('name', type=str)
+parser.add_argument('path', type=str)
+parser.add_argument('patch_size', type=int)
 args = parser.parse_args()
-
-args.name = 'PR009'
-args.path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/'
-args.patch_size = 92
 
 def layer(result, distribution, layers):
     direction = pd.DataFrame(distribution['0'])
@@ -45,7 +41,7 @@ def domDir_layer_tonotopy(result, frangi_data, max_dist, patch_size):
         nbr_s[key_x_resolution][key_tonotopy] += 1
     return s, nbr_s
 
-def plot_directionalityPolar(patch_size, data_l, data_r, method, path_output):
+def plot_directionalityPolar(patch_size, data_l, data_r, method, name, path_output):
     '''
     Plot 1D directionality per layer; comparison between left and right cortex
     patch_size:         size of patch on which the directionality distributions were computed
@@ -86,12 +82,12 @@ def plot_directionalityPolar(patch_size, data_l, data_r, method, path_output):
     ax2.legend(['L1', 'L2/3', 'L4', 'L5', 'L6'])
     handles, labels = ax2.get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center')
-    name = 'PolarLayer_' + str(patch_size) +'_'+ method+'.png'
-    plt.savefig(path_output+name, dpi = 200)
-    plt.close()
+    save_name = 'PolarLayer_' + name + '_'+str(patch_size) +'_'+ method+'.png'
+    #plt.savefig(path_output+save_name, dpi = 200)
+    #plt.close()
 
 
-def plot_nbrPatchesInCortex(patch_size, nbr_l,  nbr_r, method, path_output):
+def plot_nbrPatchesInCortex(patch_size, nbr_l,  nbr_r, method, name, path_output):
     '''
     PLot to display the nbr of patches summed over for the directionality analysis
     patch_size:         size of patch on which the directionality distributions were computed
@@ -118,8 +114,8 @@ def plot_nbrPatchesInCortex(patch_size, nbr_l,  nbr_r, method, path_output):
     ax[1].set_title('Right')
     fig.suptitle('Patches per cortex layer', fontsize=14)
     # save figure
-    plt.savefig(path_output + 'nbrPatches_'+str(patch_size)+'_'+method+'.png', dpi=200)
-    plt.close()
+    #plt.savefig(path_output + 'nbrPatches_'+name+'_'+str(patch_size)+'_'+method+'.png', dpi=200)
+    #plt.close()
 
 
 def plot_color2D_layerTonotopy(data, path_output, patch_size, side, annot, cmap = 'Oranges', pixel = 0.5417):
@@ -180,8 +176,8 @@ for i in range(len(method)):
     distribution_right = pd.read_csv(args.path + side[1] + '/' + 'Distribution_'+ side[1] +'_'+ str(patch_size) + '_'+ method[i] + '.csv', encoding = "ISO-8859-1")
     d_l, nbr_l = layer(result_left, distribution_left, layers)
     d_r, nbr_r = layer(result_right, distribution_right, layers)
-    plot_directionalityPolar(patch_size, d_l, d_r, method[i], args.path)
-    plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, method[i], args.path)
+    plot_directionalityPolar(patch_size, d_l, d_r, method[i], args.name, args.path)
+    plot_nbrPatchesInCortex(patch_size, nbr_l, nbr_r, method[i], args.name, args.path)
 
 
 # absolute difference between Fiji_directionality and OrientationJ orientations (dominant direction)

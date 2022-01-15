@@ -56,8 +56,9 @@ Result_OriJ = pd.DataFrame(np.vstack(Result_OriJ))
 Result_OriJ.to_csv(path+'Result_OriJ_92.csv', index=False)
 
 
+
 #### now restructure data: average over z-direction; output: sampleID, side, layer, y=tonotopicAxis, domDir
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/'
 data_long = pd.read_csv(os.path.join(path, 'Result_Fiji_92.csv'))
 layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
 
@@ -73,27 +74,30 @@ for sampleId in [9,12,14,17]:
                 z_sum = np.deg2rad(np.concatenate(z_sum).ravel())
                 z_counts = len(z_sum)
                 #mean_circ = circmean(z_sum)
-                mean_circ = pd.DataFrame(z_sum).mode()[0][0]
+                df = pd.DataFrame(z_sum)
+                if df.empty:
+                    continue
+                else:
+                    mean_circ = pd.DataFrame(z_sum).mode()[0][0]
                 result.append([sampleId, side, layer_id, y, mean_circ,z_counts])
 Result = pd.DataFrame(result)
 for i in range(len(Result[4])):
     if Result[4][i] > np.pi:
         Result[4][i] = Result[4][i] - 2. * np.pi
 Result[4] = np.rad2deg(Result[4])
-Result.to_csv(path+'Result_Fiji_92_mode-short.csv', index=False)
+Result.to_csv(path+'Result_Fiji_92-short.csv', index=False)
 
 
 
 #### Plotting: density plots
 patch_size = 92
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/'
 Result_long = pd.read_csv(os.path.join(path, 'Result_Fiji_'+str(patch_size)+'.csv'))
 Result_short = pd.read_csv(os.path.join(path, 'Result_Fiji_'+str(patch_size)+'-short.csv'))
-Result_mode = pd.read_csv(os.path.join(path, 'Result_Fiji_'+str(patch_size)+'_mode-short.csv'))
+
 
 #### density plot
 fig, (ax1) = plt.subplots(1, 1, figsize=(10, 8))
-#sns.set(font_scale = 1.5)
 sns.set(style="ticks")
 plt.xlim(-90, 90)
 sns.kdeplot(data=Result_long, x=Result_long['6'], bw=0.5, color="red")
@@ -112,7 +116,6 @@ plt.show()
 
 #### histogram + density plot
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
-#sns.set(font_scale = 1.5)
 sns.set(style="ticks")
 plt.xlim(-90, 90)
 sns.histplot(data=Result_long, x=Result_long['6'], color="red", label="Combined", kde=True)
@@ -124,11 +127,11 @@ plt.legend(labels=['Combined'], title = '',
            fontsize = 20, title_fontsize = '2', loc = 'upper right')
 plt.show()
 
+
 ############# all same for conditions
 dat = Result_long[(Result_long['1']=='l') and (Result_long['2']!='L1')]
 
 fig, (ax1) = plt.subplots(1, 1, figsize=(10, 8))
-#sns.set(font_scale = 1.5)
 sns.set(style="ticks")
 plt.xlim(-90, 90)
 sns.kdeplot(dat['6'], bw=0.5, color="red")
@@ -165,3 +168,6 @@ ax1.set_yticklabels(ax1.get_yticks(), size=24)
 ax1.set_xticklabels(ax1.get_xticks(),size=24)
 #plt.legend(labels=[], title = 'L1', fontsize = 24, title_fontsize = '2', loc = 'upper right')
 plt.show()
+
+
+############################ create further graphs for statistics ####################
