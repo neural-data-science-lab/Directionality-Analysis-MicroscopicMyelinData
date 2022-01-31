@@ -205,7 +205,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                             distribution[idx,1] = patch_shifted['Slice_' + str(v)][row]
                         domDir = distribution[distribution[:, 1].argmax(), 0]  #get mode of directions in patch
                         if args.side == 'l':
-                            domDir = domDir*(-1)
+                            domDir = (domDir)*(-1)
                             distribution[:, 0] = distribution[:, 0]*(-1)
                             distribution = distribution[distribution[:,0].argsort()]
                         result.append(np.array([v, j, i, domDir, cortexDepth, correction]))
@@ -215,7 +215,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
 
 
 ############################################# Directionality vizualizations ##########################################
-def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, annontation, cmap, pixel = 0.5417):
+def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, annontation, cmap = 'twilight_r', pixel = 0.5417):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -232,17 +232,23 @@ def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name
     fig.subplots_adjust(bottom=0.2)
     x_axis_labels = ['I', 'II/III', 'IV', 'V', 'VI']  # labels for x-axis
     sns.color_palette("twilight_r", as_cmap=True)
-    sns.heatmap(stats / nbr, ax=ax1, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
-                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .8}, annot=annontation, annot_kws={"size": 12})  #
-    ax1.set_ylabel('Tonotopic axis', fontsize=28)
-    ax1.set_xlabel('Layers', fontsize=28)
+    sns.heatmap(stats / nbr, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
+                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .6}, annot=annontation, annot_kws={"size": 5}) #
+    ax1.set_xlim(ax1.get_xlim())
+    ax2 = ax1.twiny()
+    ax1.set_ylabel('Tonotopic axis', fontsize=20)
+    ax1.set_xlabel('Layers', fontsize=20)
     layer_mid = np.array([0, 29.25, 58.5, 146.575, 234.65, 267.95, 302.25, 429.65, 557.05, 654.55, 752.05]) / pixel
     new_tick_locations = layer_mid / patch_size
-    ax1.set_xticks(new_tick_locations)
+    ax2.xaxis.set_ticks_position("bottom")
+    ax2.xaxis.set_label_position("bottom")
+    ax2.spines["bottom"].set_position(("axes", -0.05))
+    ax2.set_xticks(new_tick_locations)
     Layers = ['', 'I', '', 'II/III', '', 'IV', '', 'V', '', 'VI', '']
-    ax1.set_xticklabels(Layers, fontsize=24, horizontalalignment='center')
-    cbar = ax1.collections[0].colorbar
-    cbar.ax.tick_params(labelsize=24)
+    ax2.set_xticklabels(Layers, fontsize=16, horizontalalignment='center')
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.spines['left'].set_visible(False)
     if annontation == True:
         plt.savefig(path_output +'Layers_tonotopy_'+name+str(patch_size)+method+'annot.png', dpi=180)
     else:
@@ -382,9 +388,8 @@ if args.plots == 'True':
     slice = np.arange(args.z_start, args.z_end, 10)
     id = np.arange(0,bg_data.shape[0],10)
     for i in range(len(slice)):
-        #domDir = filter(lambda c: c[0] == slice[i], result)
-        #domDir = pd.DataFrame(list(domDir))
-        domDir = result[result[0]==slice[i]]
+        domDir = filter(lambda c: c[0] == slice[i], result)
+        domDir = pd.DataFrame(list(domDir))
         plot_domOrientation(bg_data, args.path, domDir, method, args.patch_size, id[i], args.name)
 
     result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]

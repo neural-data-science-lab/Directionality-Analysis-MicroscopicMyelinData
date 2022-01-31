@@ -28,12 +28,12 @@ from skimage.io import imsave
 
 #####################################################################################################
 ### swap axes
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Registration/PR009_Overview_C00_downscaled/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/Registration/Registration_Overview_AllenAtlas/data_21-01-22/'
 #static_data, static_affine, static_image = load_nifti(pjoin(path, 'AF_template.nii.gz'), return_img=True)
-static_AF = io.imread(os.path.join(path, 'PR009_Overview_C00_rigidIso.tif'))
+static_AF = io.imread(os.path.join(path, 'PR009_Overview_C00_rigidIso_SyN_CC.tif'))
 test = np.swapaxes(static_AF, 0, 2)
 #nib.Nifti1Image(test,None).to_filename(os.path.join(path, 'AF_template_swapAxes.nii.gz')) #maybe just that is sufficient ToDo: define header?
-imsave(path+"PR009_Overview_C00_rigidIso_02.tif", test.astype('uint16'))
+imsave(path+"PR009_Overview_C00_rigidIso_SyN_CC_02.tif", test.astype('uint16'))
 
 ######################################################################################################
 ### Dipy: registration

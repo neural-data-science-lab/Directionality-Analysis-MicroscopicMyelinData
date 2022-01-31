@@ -4,43 +4,42 @@ library(circular)
 library(NISTunits)
 library(tibble)
 
-#### read in data
-data <- read.csv("/ptmp/muellerg/Result_Fiji_92_mode-short.csv")
-colnames(data)<-c("sampleID","side","layer","y","domDir","count_per_av")
-dat<-data[!(data$layer=="L1"),]
+data_long <- read.csv("~/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/Result_Fiji_92.csv")
+colnames(data_long)<-c("sampleID","side","layer","z","y","x", "domDir","cortexDepth","correction")
+data <- data_long[!(data_long$layer=="L1" |
+                      data_long$layer=="L6" |
+                      data_long$sampleID!=12),]
 
-data$sampleID <- as.factor(data$sampleID)
-dat_<-data[!(data$layer=="L1"),] 
+data_ <- data
+data_$sampleID <- as.factor(data_$sampleID)
+attach(data_)
+data$domDir <- NISTdegTOradian(data$domDir)
+data$side <- as.factor(data$side)
+data$layer <- as.factor(data$layer)
+data$sampleID <- as.numeric(data$sampleID)
+data$side <- as.numeric(data$side)
+data$layer <- as.numeric(data$layer)
+colnames(data)<-c("sampleID","side_num","layer_num","z","y","x", "domDir","cortexDepth","correction") 
+data<-add_column(data, side, .before = "side_num")
+data<-add_column(data, layer, .before = "layer_num")
+#data$side_num <- as.factor(data$side_num)
+#data$layer_num <- as.factor(data$layer_num)
+detach(data_)
+attach(data)
 
-##### reorganize data for bpnme
-#dataL1
-attach(dat_)
-dat$domDir <- NISTdegTOradian(dat$domDir)
-dat$side <- as.factor(dat$side)
-dat$layer <- as.factor(dat$layer)
-dat$sampleID <- as.numeric(dat$sampleID)
-dat$side <- as.numeric(dat$side)
-dat$layer <- as.numeric(dat$layer)
-colnames(dat)<-c("sampleID","side_num","layer_num","y", "domDir","count_per_av") 
-dat<-add_column(dat, side, .before = "side_num")
-dat<-add_column(dat, layer, .before = "layer_num")
-dat$side_num <- as.factor(dat$side_num)
-dat$layer_num <- as.factor(dat$layer_num)
-detach(dat_)
-attach(dat)
 
 # Model comparison: bottom-up, 1. Model fit, 2. explained variance (part of random effect variances)
 #Intercept-only model: only a fixed and random intercepts
 
 fit.bpnr_1p = bpnr(pred.I = domDir ~ side_num,
-                      data = dat,
+                      data = data,
                       its = 20000, burn = 1500, n.lag = 5, seed = 101)
 save(fit.bpnr_1p, file = "/ptmp/muellerg/fit.bpnr_1p.rda")
 gc()
 
 #include further higher-level factors e.g. between-subject factors
 fit.bpnr_2p = bpnr(pred.I = domDir ~ side_num + layer_num,
-                      data = dat,
+                      data = data,
                       its = 20000, burn = 1500, n.lag = 5, seed = 101)
 save(fit.bpnr_2p, file = "/ptmp/muellerg/fit.bpnr_2p.rda")
 gc()

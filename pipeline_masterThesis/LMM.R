@@ -156,7 +156,7 @@ fit.dataL1_3p = bpnme(pred.I = domDir ~ side_num + layer_num + y + (1|sampleID),
 
 
 # read in files 
-load(file = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/fit.mode_bpnr_1p-18.rda")
+load(file = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/fit.bpnr_lag1-12.rda")
 load(file = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/fit.mode_bpnr_2p-18.rda")
 load(file = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/fit.mode_bpnr_3p-18.rda")
 load(file = "C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_12141718/fit.mode_lag5.rda")
