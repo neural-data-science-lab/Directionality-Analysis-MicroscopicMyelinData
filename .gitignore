@@ -2,3 +2,6 @@
 *.tif
 *.png
 /preProject/.idea/
+
+/preProject/
+/pipeline_masterThesis/
