@@ -49,9 +49,6 @@ def normalize(image):
     max_val=np.max(image)
     return (image-min_val)/(max_val-min_val)
 
-def Convert(lst):
-    return [ -i for i in lst ]
-
 
 ################################### Orientation distribution (Fiji or Py here) #########################################
 def OrientationJ(patch, sigma=2):
@@ -185,7 +182,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                 x = np.arange(z_start + batch * batch_size, z_start + batch * batch_size + batch_size, 1) #z-slices according to batch to be considered
                 for k, v in enumerate(x):
                     cortexDepth = dists3D[k][int(j * patch_size + patch_size / 2), int(i * patch_size + patch_size / 2)]
-                    if cortexDepth > 0 and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v)])) == False: #binary in patch_otsu and
+                    if cortexDepth > 0 and cortexDepth <= max_dist and np.isnan(np.min(patch['Slice_' + str(v+1)])) == False: #binary in patch_otsu and
                         angle_cortex = orientations[k][int(j * patch_size + patch_size / 2),
                                                        int(i * patch_size + patch_size / 2)]
                         # get angle difference and rotate all orientations in patch
@@ -195,14 +192,14 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
                             correction = -90 - angle_cortex
                         direction_corrected = patch['Direction'] - correction
                         # shift angles < -90 and > 90 degrees back into -90 to 90 range
-                        patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(v)]], axis=1)
+                        patch_shifted = pd.concat([direction_corrected, patch['Slice_' + str(v+1)]], axis=1)
                         patch_shifted['Direction'].loc[patch_shifted['Direction'] < -90] += 180
                         patch_shifted['Direction'].loc[patch_shifted['Direction'] > 90] -= 180
                         # relocate directionality values after shifting to original -90/90 interval ->take nearest value in 'Direction' and save in summary
                         distribution = np.stack((np.copy(direction), np.zeros(len(direction))), axis=1) #corrected distriution for i,j,v
                         for row in range(len(patch_shifted)):
                             idx = (np.abs(distribution[:,0] - patch_shifted['Direction'][row])).argmin()
-                            distribution[idx,1] = patch_shifted['Slice_' + str(v)][row]
+                            distribution[idx,1] = patch_shifted['Slice_' + str(v+1)][row]
                         domDir = distribution[distribution[:, 1].argmax(), 0]  #get mode of directions in patch
                         if args.side == 'l':
                             domDir = domDir*(-1)
@@ -215,7 +212,7 @@ def directionality_analysis(cortex_mask, path, name_orientation, batch_size, pat
 
 
 ############################################# Directionality vizualizations ##########################################
-def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, annontation, cmap, pixel = 0.5417):
+def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name, annontation, cmap, side, pixel = 0.5417):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -233,16 +230,21 @@ def plot_color2D_layerTonotopy(stats, nbr, path_output, patch_size, method, name
     x_axis_labels = ['I', 'II/III', 'IV', 'V', 'VI']  # labels for x-axis
     sns.color_palette("twilight_r", as_cmap=True)
     sns.heatmap(stats / nbr, ax=ax1, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
-                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .8}, annot=annontation, annot_kws={"size": 12})  #
-    ax1.set_ylabel('Tonotopic axis', fontsize=28)
-    ax1.set_xlabel('Layers', fontsize=28)
+                vmin=-90, vmax=90, center=0, cbar_kws={"shrink": .8}, annot=annontation, annot_kws={"size": 10})  #
+    ax1.xaxis.tick_top()
+    ax1.set_ylabel('Tonotopic axis', fontsize=24)
+    ax1.xaxis.set_label_position('top')
+    ax1.set_xlabel('Layer', fontsize=24)
     layer_mid = np.array([0, 29.25, 58.5, 146.575, 234.65, 267.95, 302.25, 429.65, 557.05, 654.55, 752.05]) / pixel
     new_tick_locations = layer_mid / patch_size
     ax1.set_xticks(new_tick_locations)
     Layers = ['', 'I', '', 'II/III', '', 'IV', '', 'V', '', 'VI', '']
-    ax1.set_xticklabels(Layers, fontsize=24, horizontalalignment='center')
+    ax1.set_xticklabels(Layers, fontsize=22, horizontalalignment='center')
+    if side == 'r':
+        plt.gca().invert_xaxis()
     cbar = ax1.collections[0].colorbar
-    cbar.ax.tick_params(labelsize=24)
+    # here set the labelsize by 20
+    cbar.ax.tick_params(labelsize=20)
     if annontation == True:
         plt.savefig(path_output +'Layers_tonotopy_'+name+str(patch_size)+method+'annot.png', dpi=180)
     else:
@@ -275,7 +277,7 @@ def plot_domOrientation(bg_data, path_output, domDir, method, patch_size, id, na
     colormap = cm.twilight_r
     fig, ax = plt.subplots(figsize=(8, 8), dpi=180)
     ax.imshow(data, cmap="Greys")
-    ax.quiver(X, Y, U, V, color=colormap(norm(colors)), units='xy', linewidths=12)
+    ax.quiver(X, Y, U, V, color=colormap(norm(colors)), units='xy', linewidths=12, headlength=0.001)
     norm.autoscale(np.array(angles))
     sm = plt.cm.ScalarMappable(cmap='twilight_r', norm=norm)
     sm.set_array([])
@@ -378,6 +380,7 @@ if args.Directionality == 'True':
 print('x3-00')
 ###################################################### main: Plots ####################################################
 if args.plots == 'True':
+    result = pd.DataFrame(result)  # [(k,j,i), dominant direction, cortex depth, correction factor]
     # domOrientation
     slice = np.arange(args.z_start, args.z_end, 10)
     id = np.arange(0,bg_data.shape[0],10)
@@ -387,7 +390,6 @@ if args.plots == 'True':
         domDir = result[result[0]==slice[i]]
         plot_domOrientation(bg_data, args.path, domDir, method, args.patch_size, id[i], args.name)
 
-    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]
     print('x3-01')
     # layerTonotopy
     max_dist = 752.05 / pixel
@@ -400,7 +402,7 @@ if args.plots == 'True':
         key_tonotopy = result[1][i]  # key for position in tonotopic axis
         s[key_x_resolution][key_tonotopy] += result[3][i]
         nbr_s[key_x_resolution][key_tonotopy] += 1
-    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = True, cmap = 'twilight_r', pixel = 0.5417)
-    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = False, cmap = 'twilight_r', pixel = 0.5417)
+    #plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, annontation = True, cmap = 'twilight_r', pixel = 0.5417)
+    plot_color2D_layerTonotopy(s, nbr_s, args.path, args.patch_size, method, args.name, False, 'twilight_r', args.side, pixel = 0.5417)
 print('end')
 

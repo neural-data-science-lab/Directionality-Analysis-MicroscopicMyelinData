@@ -26,7 +26,7 @@ def posteriorPlot (data, path, name, lmean, lmedian, rmean, rmedian,lLB, lUB, rL
         ax[i].axvline(rLB[i], c="grey", ls="--", lw=2.5)
         ax[i].set_ylabel('Density', fontsize=22)
         ax[i].set_xlabel('')
-        ax[i].set_xticks(np.arange(-0.5,1.1,0.1))
+        ax[i].set_xticks(np.arange(-0.5,1.1,0.2))
         ax[i].set_xticklabels([-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.], size=16)
         ax[i].set_yticks(np.arange(0, 18000, step=2000))
         ax[i].set_yticklabels(np.arange(0, 18000, step=2000), size=20)
@@ -80,10 +80,10 @@ Result_OriJ = pd.DataFrame(np.vstack(Result_OriJ))
 Result_OriJ.to_csv(path+'Result_OriJ_92.csv', index=False)
 
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_randomized_14/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_VCx/'
 csv_files = glob.glob(os.path.join(path, "*3p*.csv"))
 for i, file in enumerate(csv_files):
-    name = file[105:-9]
+    name = file[125:-7]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 
 Intercept = pd.melt(pd.DataFrame(np.arctan2(bpnr3p_beta2_1, bpnr3p_beta1_1)))
@@ -125,7 +125,40 @@ rLB = ([np.deg2rad(bpnr3p_sider[3].mean()),np.deg2rad(bpnr3p_siderlayerL4[3].mea
 rUB = ([np.deg2rad(bpnr3p_sider[4].mean()),np.deg2rad(bpnr3p_siderlayerL4[4].mean()),np.deg2rad(bpnr3p_siderlayerL5[4].mean())])
 
 
-posteriorPlot (l23, path, '_rand', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
+posteriorPlot (l23, path, '_VCx', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
+
+
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/y-component/'
+csv_files = glob.glob(os.path.join(path, "*.csv"))
+for i, file in enumerate(csv_files):
+    name = file[135:-4]
+    locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
+
+y = []
+for i in ['09', '12', '14', '17', 'VCx']:
+    for j in ['SAM', 'bc', 'AS']:
+        values = pd.DataFrame(pd.melt(locals()[j+'_'+i])['value'])
+        values.insert(0, 'param', np.repeat(j, 250000))
+        values.insert(0, 'sample', np.repeat(i, 250000))
+        y.append(values)
+Y = pd.DataFrame(np.vstack(y))
+
+colors = []
+fig, ax = plt.subplots(1, figsize=(15, 10))
+d = ['L2/3', 'L4', 'L5']
+sns.set(style="ticks")
+sns.histplot(ax=ax[i],data=dat, x='value', hue = 'side', kde=True, palette=colors)
+ax.set_ylabel('Density', fontsize=24)
+ax.set_xlabel('')
+#ax.set_xticks(np.arange(-0.5,1.1,0.2))
+ax.set_xticklabels(ax.get_xticks(), size=22)
+#ax.set_yticks(np.arange(0, 18000, step=2000))
+ax.set_yticklabels(ax.get_yticks(), size=22)
+ax.legend(['r','l'],title='Samples', fontsize=22, title_fontsize=24, loc = 'upper right')
+plt.tight_layout()
+plt.show()
+plt.savefig(path + 'postDistr_y_09.png', dpi=200)
+plt.close()
 
 
 #################### graveyard: further plots ############################

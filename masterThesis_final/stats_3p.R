@@ -119,8 +119,6 @@ write.matrix(sample.beta2_5, file="/ptmp/muellerg/bpnr3p_beta2_5_VCx.csv")
 
 
 
-' Randomize data as a Sanity check'
-
 
 
 

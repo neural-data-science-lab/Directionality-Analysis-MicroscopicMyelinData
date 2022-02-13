@@ -8,7 +8,7 @@ library(circular)
 library(NISTunits)
 library(tibble)
 
-data_long <- read.csv("/ptmp/muellerg/Result_Fiji_92.csv")
+data_long <- read.csv("/ptmp/muellerg/Result_Fiji_92-C3.csv")
 colnames(data_long)<-c("sampleID","side","layer","z","y","x", "domDir","cortexDepth","correction")
 data <- data_long[!(data_long$layer=="L1" |
                       data_long$layer=="L6" |
@@ -90,22 +90,22 @@ for (i in 1:Nsim){
 }
 
 library(MASS)
-write.matrix(sample.Intercept, file="/ptmp/muellerg/bpnr2p_Intercept_14.csv")
-write.matrix(sample.sider, file="/ptmp/muellerg/bpnr2p_sider_14.csv")
-write.matrix(sample.layerL4, file="/ptmp/muellerg/bpnr2p_layerL4_14.csv")
-write.matrix(sample.layerL5, file="/ptmp/muellerg/bpnr2p_layerL5_14.csv")
-write.matrix(sample.siderlayerL4, file="/ptmp/muellerg/bpnr2p_siderlayerL4_14.csv")
-write.matrix(sample.siderlayerL5, file="/ptmp/muellerg/bpnr2p_siderlayerL5_14.csv")
-write.matrix(sample.layerL4layerL5, file="/ptmp/muellerg/bpnr2p_layerL4layerL5_14.csv")
-write.matrix(sample.fit, file="/ptmp/muellerg/bpnr2p_fit_14.csv")
-write.matrix(sample.beta1_1, file="/ptmp/muellerg/bpnr2p_beta1_1_14.csv")
-write.matrix(sample.beta1_2, file="/ptmp/muellerg/bpnr2p_beta1_2_14.csv")
-write.matrix(sample.beta1_3, file="/ptmp/muellerg/bpnr2p_beta1_3_14.csv")
-write.matrix(sample.beta1_4, file="/ptmp/muellerg/bpnr2p_beta1_4_14.csv")
-write.matrix(sample.beta2_1, file="/ptmp/muellerg/bpnr2p_beta2_1_14.csv")
-write.matrix(sample.beta2_2, file="/ptmp/muellerg/bpnr2p_beta2_2_14.csv")
-write.matrix(sample.beta2_3, file="/ptmp/muellerg/bpnr2p_beta2_3_14.csv")
-write.matrix(sample.beta2_4, file="/ptmp/muellerg/bpnr2p_beta2_4_14.csv")
+write.matrix(sample.Intercept, file="/ptmp/muellerg/bpnr2p_Intercept_C3.csv")
+write.matrix(sample.sider, file="/ptmp/muellerg/bpnr2p_sider_C3.csv")
+write.matrix(sample.layerL4, file="/ptmp/muellerg/bpnr2p_layerL4_C3.csv")
+write.matrix(sample.layerL5, file="/ptmp/muellerg/bpnr2p_layerL5_C3.csv")
+write.matrix(sample.siderlayerL4, file="/ptmp/muellerg/bpnr2p_siderlayerL4_C3.csv")
+write.matrix(sample.siderlayerL5, file="/ptmp/muellerg/bpnr2p_siderlayerL5_C3.csv")
+write.matrix(sample.layerL4layerL5, file="/ptmp/muellerg/bpnr2p_layerL4layerL5_C3.csv")
+write.matrix(sample.fit, file="/ptmp/muellerg/bpnr2p_fit_C3.csv")
+write.matrix(sample.beta1_1, file="/ptmp/muellerg/bpnr2p_beta1_1_C3.csv")
+write.matrix(sample.beta1_2, file="/ptmp/muellerg/bpnr2p_beta1_2_C3.csv")
+write.matrix(sample.beta1_3, file="/ptmp/muellerg/bpnr2p_beta1_3_C3.csv")
+write.matrix(sample.beta1_4, file="/ptmp/muellerg/bpnr2p_beta1_4_C3.csv")
+write.matrix(sample.beta2_1, file="/ptmp/muellerg/bpnr2p_beta2_1_C3.csv")
+write.matrix(sample.beta2_2, file="/ptmp/muellerg/bpnr2p_beta2_2_C3.csv")
+write.matrix(sample.beta2_3, file="/ptmp/muellerg/bpnr2p_beta2_3_C3.csv")
+write.matrix(sample.beta2_4, file="/ptmp/muellerg/bpnr2p_beta2_4_C3.csv")
 
 
 

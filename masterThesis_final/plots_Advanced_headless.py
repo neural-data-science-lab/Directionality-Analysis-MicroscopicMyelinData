@@ -29,9 +29,8 @@ def layer(result, distribution, layers):
         nbr_d[key_layer - 1] += 1
     return d, nbr_d
 
-def domDir_layer_tonotopy(result, frangi_data, max_dist, patch_size):
+def domDir_layer_tonotopy(result, height, max_dist, patch_size):
     x_resolution = np.arange(0, max_dist - patch_size, patch_size)
-    height = frangi_data.shape[1]
     s = pd.DataFrame(np.zeros((int(height / patch_size), len(x_resolution))))  # pd for corrected valid average orientation per layer and pos in tonotopic axis
     nbr_s = pd.DataFrame(np.zeros((int(height / patch_size), len(x_resolution))))  # pd to sample for the nbr per patches layer and position along tonotopic axis
     for i in range(result.shape[0]):
@@ -125,7 +124,7 @@ def plot_nbrPatchesInCortex(patch_size, nbr_l,  nbr_r, method, name, path_output
     #plt.close()
 
 
-def plot_color2D_layerTonotopy(data, path_output, patch_size, side, annot, cmap = 'Oranges', pixel = 0.5417):
+def plot_color2D_layerTonotopy(data, path_output, patch_size, side, hemisphere, annot=False, cmap = 'Oranges', pixel = 0.5417):
     '''
     Plot see Levy2019 3b/c with the axes: layers and tonotopic axis
     Mode of orientations of patches are averaged over the z-depth and normalized by the nbr of patches per layer & tonotopic axis
@@ -144,13 +143,16 @@ def plot_color2D_layerTonotopy(data, path_output, patch_size, side, annot, cmap 
     sns.color_palette("twilight_r", as_cmap=True)
     sns.heatmap(data, ax=ax1, cmap=cmap, square=True, xticklabels=False, yticklabels=False,
                 vmin=0, vmax=90, center=0, cbar_kws={"shrink": .8}, annot=annot, annot_kws={"size": 12})  #
-    ax1.set_ylabel('Tonotopic axis', fontsize=28)
-    ax1.set_xlabel('Layers', fontsize=28)
+    ax1.xaxis.tick_top()
+    ax1.set_ylabel('Tonotopic axis', fontsize=24)
+    ax1.set_xlabel('Layers', fontsize=24)
     layer_mid = np.array([0, 29.25, 58.5, 146.575, 234.65, 267.95, 302.25, 429.65, 557.05, 654.55, 752.05]) / pixel
     new_tick_locations = layer_mid / patch_size
     ax1.set_xticks(new_tick_locations)
     Layers = ['', 'I', '', 'II/III', '', 'IV', '', 'V', '', 'VI', '']
     ax1.set_xticklabels(Layers, fontsize=22, horizontalalignment='center')
+    if hemisphere == 'r':
+        plt.gca().invert_xaxis()
     cbar = ax1.collections[0].colorbar
     cbar.ax.tick_params(labelsize=20)
     if annot == True:
@@ -162,7 +164,7 @@ def plot_color2D_layerTonotopy(data, path_output, patch_size, side, annot, cmap 
 
 ################  MAIN
 pixel = 0.5417  # um per pixel
-side = [args.name + '_l_ACx', args.name + '_r_ACx']
+side = [args.name + '_l_VCx', args.name + '_r_VCx']
 patch_size = int(round(args.patch_size))
 method = ['Fiji_Directionality_', 'OrientationJ_']
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
@@ -182,13 +184,13 @@ for i in range(len(method)):
 
 
 # absolute difference between Fiji_directionality and OrientationJ orientations (dominant direction)
+h = ['l', 'r']
 for i in range(len(side)):
     data_frangi = side[i] + '/' + side[i] + '_C03_bg.tif'
     frangi_data = io.imread(os.path.join(args.path, data_frangi))
     result_left = pd.read_csv(args.path + side[i] + '/' + 'Result_'+ side[i] +'_'+ str(patch_size) + '_'+ method[0] + '.csv', encoding = "ISO-8859-1")
     result_right = pd.read_csv(args.path + side[i] + '/' + 'Result_'+ side[i] +'_'+ str(patch_size) + '_'+ method[1] + '.csv', encoding = "ISO-8859-1")
-    s_left, nbr_left = domDir_layer_tonotopy(result_left, frangi_data, max_dist, patch_size)
-    s_right, nbr_right = domDir_layer_tonotopy(result_right, frangi_data, max_dist, patch_size)
+    s_left, nbr_left = domDir_layer_tonotopy(result_left, frangi_data.shape[1], max_dist, patch_size)
+    s_right, nbr_right = domDir_layer_tonotopy(result_right, frangi_data.shape[1], max_dist, patch_size)
     data = np.abs(np.abs(s_left/nbr_left)-np.abs(s_right/nbr_right))
-    plot_color2D_layerTonotopy(data, args.path, patch_size, side[i], True, cmap = 'RdGy')
-    plot_color2D_layerTonotopy(data, args.path, patch_size, side[i], False, cmap = 'RdGy')
+    plot_color2D_layerTonotopy(data, args.path, patch_size, side[i], h[i], False, cmap = 'RdGy')

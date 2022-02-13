@@ -262,9 +262,9 @@ def plot_domOrientation(bg_data, path_output, domDir, method, patch_size, id, na
     :return: 2D image of an overlay of the bg_data and the vectorfield of the dominant directions
     '''
     data = bg_data[id]
-    X = domDir[2] * patch_size + patch_size / 2
-    Y = domDir[1] * patch_size + patch_size / 2
-    angles = domDir[3] + domDir[5]  # mode orientation + correction
+    X = domDir['2'] * patch_size + patch_size / 2
+    Y = domDir['1'] * patch_size + patch_size / 2
+    angles = domDir['3'] + domDir['5']  # mode orientation + correction
     angles.loc[angles < -90] += 180  # rescale to -90° -> 90°
     angles.loc[angles > 90] -= 180
     U = np.cos(angles * np.pi / 180)
@@ -378,6 +378,7 @@ if args.Directionality == 'True':
 print('x3-00')
 ###################################################### main: Plots ####################################################
 if args.plots == 'True':
+    result = pd.DataFrame(result)
     # domOrientation
     slice = np.arange(args.z_start, args.z_end, 10)
     id = np.arange(0,bg_data.shape[0],10)
@@ -387,7 +388,7 @@ if args.plots == 'True':
         domDir = result[result[0]==slice[i]]
         plot_domOrientation(bg_data, args.path, domDir, method, args.patch_size, id[i], args.name)
 
-    result = pd.DataFrame(result) # [(k,j,i), dominant direction, cortex depth, correction factor]
+     # [(k,j,i), dominant direction, cortex depth, correction factor]
     print('x3-01')
     # layerTonotopy
     max_dist = 752.05 / pixel

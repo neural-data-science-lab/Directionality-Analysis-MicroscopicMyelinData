@@ -20,7 +20,7 @@ data$layer <- as.factor(data$layer)
 
 
 
-'data_long <- read.csv("~/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/Result_Fiji_92.csv")
+'data_long <- read.csv("~/Studium/MasterCMS/MasterThesis/DataPC/Result_92_1412141718/Result_Fiji_92.csv")
 colnames(data_short)<-c("sampleID","side","layer","y","domDir","count_per_av")
 dat <- data_short[!(data_short$layer=="L1" |
                       data_short$layer=="L6" |

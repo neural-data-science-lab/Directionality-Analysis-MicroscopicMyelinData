@@ -12,7 +12,7 @@ data_long <- read.csv("/ptmp/muellerg/Result_Fiji_92.csv")
 colnames(data_long)<-c("sampleID","side","layer","z","y","x", "domDir","cortexDepth","correction")
 data <- data_long[!(data_long$layer=="L1" |
                       data_long$layer=="L6" |
-                      data_long$sampleID!=14),]
+                      data_long$sampleID!=17),]
 attach(data)
 data$domDir <- NISTdegTOradian(data$domDir)
 data$side <- as.factor(data$side)
@@ -20,11 +20,11 @@ data$layer <- as.factor(data$layer)
 
 
 
-'data_long <- read.csv("~/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/Result_Fiji_92.csv")
+'data_long <- read.csv("~/Studium/MasterCMS/MasterThesis/DataPC/Result_92_1712171718/Result_Fiji_92.csv")
 colnames(data_short)<-c("sampleID","side","layer","y","domDir","count_per_av")
 dat <- data_short[!(data_short$layer=="L1" |
                       data_short$layer=="L6" |
-                      data_short$sampleID!=14),]
+                      data_short$sampleID!=17),]
 sample <- sample_n(data, 7500)
 
 ggplot(data, aes(x=domDir)) + geom_histogram(bins = 45)
@@ -76,13 +76,13 @@ for (i in 1:Nsim){
 }
 
 library(MASS)
-write.matrix(sample.Intercept, file="/ptmp/muellerg/bpnr1p_Intercept_14.csv")
-write.matrix(sample.sider, file="/ptmp/muellerg/bpnr1p_side2_14.csv")
-write.matrix(sample.fit, file="/ptmp/muellerg/bpnr1p_fit_14.csv")
-write.matrix(sample.beta1_1, file="/ptmp/muellerg/bpnr1p_beta1_1_14.csv")
-write.matrix(sample.beta1_2, file="/ptmp/muellerg/bpnr1p_beta1_2_14.csv")
-write.matrix(sample.beta2_1, file="/ptmp/muellerg/bpnr1p_beta2_1_14.csv")
-write.matrix(sample.beta2_2, file="/ptmp/muellerg/bpnr1p_beta2_2_14.csv")
+write.matrix(sample.Intercept, file="/ptmp/muellerg/bpnr1p_Intercept_17.csv")
+write.matrix(sample.sider, file="/ptmp/muellerg/bpnr1p_side2_17.csv")
+write.matrix(sample.fit, file="/ptmp/muellerg/bpnr1p_fit_17.csv")
+write.matrix(sample.beta1_1, file="/ptmp/muellerg/bpnr1p_beta1_1_17.csv")
+write.matrix(sample.beta1_2, file="/ptmp/muellerg/bpnr1p_beta1_2_17.csv")
+write.matrix(sample.beta2_1, file="/ptmp/muellerg/bpnr1p_beta2_1_17.csv")
+write.matrix(sample.beta2_2, file="/ptmp/muellerg/bpnr1p_beta2_2_17.csv")
 
 
 

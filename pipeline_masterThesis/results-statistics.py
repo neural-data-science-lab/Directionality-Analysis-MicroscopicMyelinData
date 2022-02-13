@@ -121,18 +121,20 @@ plt.show()
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
 sns.set(style="ticks")
 plt.xlim(-90, 90)
-sns.histplot(data=dat, x=dat['6'], hue=dat['1'], palette='colorblind', label="Combined", kde=True, bins = 50)
+sns.histplot(data=dat, x=dat['6'], hue=dat['0'], palette='colorblind', kde=True, bins = 42)
 ax1.set_ylabel('Density', fontsize=28)
 ax1.set_xlabel('Dominant direction (°)', fontsize=28)
-ax1.set_yticks(y)
-ax1.set_yticklabels(y, size=24)
+#ax1.set_yticks(y)
+ax1.set_yticklabels(ax1.get_yticks(), size=22)
 ax1.set_xticklabels(ax1.get_xticks(),size=24)
-handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["right","left"], fontsize = 28, loc = 'upper right')
+#handles, _ = ax1.get_legend_handles_labels()
+#plt.legend(handles, ["09","12","14","17"], fontsize = 28, loc = 'upper right')
 #ax1.legend().set_visible(False)
+ax1.legend(labels=["17","14","12","09"], title = '',
+           fontsize =24, loc = 'upper center')
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_14-L2345-hist.png', dpi=200)
+plt.savefig(path + 'Stats-L2345-hist.png', dpi=200)
 plt.close()
 
 
@@ -183,23 +185,23 @@ plt.close()
 
 ############################ create further graphs for statistics ####################
 # 1.) Plot small statistics over samples: mean, mode, sd
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/'
-data_long = pd.read_csv(os.path.join(path, 'Result_Fiji_92.csv'))
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_37_0912141718/'
+data_long = pd.read_csv(os.path.join(path, 'Result_Fiji_37.csv'))
 layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
 
 #Boxplot
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 8))
 sns.set(style="ticks")
 ax1 = sns.boxplot(x="0", y="6", hue="1", data = dat, palette="Greys_r", width = 0.5)
-ax1.set_ylabel('Dominant direction (°)', fontsize=24)
-ax1.set_xlabel('Mouse sample ID', fontsize=24)
-ax1.set_xticklabels(['09', '12','14','17'],size=20)
-ax1.set_yticklabels(ax1.get_yticks().astype(int), size=20)
+ax1.set_ylabel('Dominant direction (°)', fontsize=30)
+ax1.set_xlabel('Mouse sample ID', fontsize=30)
+ax1.set_xticklabels(['09', '12','14','17'],size=28)
+ax1.set_yticklabels(ax1.get_yticks().astype(int), size=28)
 handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["left","right"], fontsize = 24, loc = 2, bbox_to_anchor=(1, 0.6))
+plt.legend(handles, ["left","right"], fontsize = 32, loc = 2, bbox_to_anchor=(1, 0.6))
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_sampleID-boxplot-L23-y14-22.png', dpi=200)
+plt.savefig(path + 'Stats_sampleID-boxplot-L2345.png', dpi=200)
 plt.close()
 
 #Lineplot
@@ -207,15 +209,15 @@ fig, (ax1) = plt.subplots(1, 1, figsize=(12, 8))
 sns.set(style="ticks")
 ax1 = sns.pointplot(data=dat, x='0', y='6', hue='1', ci='sd', dodge=True, markers=['o', 's'],palette='Greys_r',
                     capsize=.1)
-ax1.set_ylabel('Dominant direction (°)', fontsize=24)
-ax1.set_xlabel('Mouse sample ID', fontsize=24)
-ax1.set_xticklabels(['09', '12','14','17'],size=20)
-ax1.set_yticklabels(ax1.get_yticks().astype(int), size=20)
+ax1.set_ylabel('Dominant direction (°)', fontsize=30)
+ax1.set_xlabel('Mouse sample ID', fontsize=30)
+ax1.set_xticklabels(['09', '12','14','17'],size=28)
+ax1.set_yticklabels(ax1.get_yticks().astype(int), size=28)
 handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["left","right"], fontsize = 24, loc = 2, bbox_to_anchor=(1, 0.6))
+plt.legend(handles, ["left","right"], fontsize = 32, loc = 2, bbox_to_anchor=(1, 0.6))
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_sampleID-pointplot-L23-y14-22.png', dpi=200)
+plt.savefig(path + 'Stats_sampleID-pointplot-L2345.png', dpi=200)
 plt.close()
 
 
@@ -239,11 +241,11 @@ plt.close()
 
 
 ########## PLot baysian results
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_09/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_37_0912141718/stats_09/'
 ## plot fit
 csv_files = glob.glob(os.path.join(path, "*fit*17.csv"))
 for i, file in enumerate(csv_files):
-    name = file[94:-7]
+    name = file[94:-5]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 
 f = []
@@ -276,7 +278,7 @@ plt.close()
 ## plot traceplots
 csv_files = glob.glob(os.path.join(path, "*beta*09.csv"))
 for i, file in enumerate(csv_files):
-    name = file[94:-7]
+    name = file[92:-4]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 
 b1_1 = []
@@ -541,4 +543,45 @@ plt.show()
 plt.savefig(path + 'Stats09_3p_params.png', dpi=200)
 plt.close()
 
+
+############fit
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/fit/'
+csv_files = glob.glob(os.path.join(path, "*.csv"))
+for i, file in enumerate(csv_files):
+    name = file[89:-4]
+    locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
+
+f = []
+for i in range(3):  #1p,2p,3p
+    i+=1
+    for j in ['09','12','14','17', 'C3', 'rand']:
+        data=locals()['bpnr'+str(i)+'p_fit_'+j]
+        fit = data[[1,3]]
+        fit[1]= fit[1]-locals()['bpnr1p_fit_'+j][1].mean()
+        fit[3] = fit[3] - locals()['bpnr1p_fit_'+j][3].mean()
+        fit = pd.DataFrame(fit.values.ravel('F'))
+        names = np.concatenate((np.repeat('DIC',25), np.repeat('WAIC',25)))
+        fit.insert(0,'criteria', names)
+        fit.insert(loc=0, column='model', value=i)
+        fit.insert(loc=0, column='sample', value=j)
+        f.append(fit)
+fit = pd.DataFrame(np.vstack(f))
+
+dat = fit[fit[2]=='DIC']
+
+color = ["#5790fc", "#e42536", "#f89c20", "#964a8b", "#656364", "k"]
+fig, (ax1) = plt.subplots(1, 1, figsize=(12, 8))
+sns.set(style="ticks")
+ax1 = sns.pointplot(data=dat, x=1, y=3, hue=0, ci='sd',  palette=color, dodge=True)
+#ax1 = sns.lineplot(data=dat, x=1, y=3,hue=0, style = 0, ci='sd',  err_style="bars", palette=color, markers=True, dashes=False)
+ax1.set_ylabel('DIC differences', fontsize=24)
+ax1.set_xlabel('Model complexity', fontsize=24)
+ax1.set_xticklabels(['domDir ~ side', 'domDir ~ side+layer','domDir ~ side+layer+y'],size=20)
+ax1.set_yticklabels(ax1.get_yticks().astype(int), size=20)
+handles, _ = ax1.get_legend_handles_labels()
+plt.legend(handles, ["9","12", "14","17", "Control I", "Control II"], title='Sample', fontsize = 22, title_fontsize=24, loc = 'best')
+plt.tight_layout()
+plt.show()
+plt.savefig(path + 'modelFit.png', dpi=200)
+plt.close()
 
