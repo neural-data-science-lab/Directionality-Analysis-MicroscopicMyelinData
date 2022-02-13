@@ -19,5 +19,7 @@ module load R/4.1.2
 # Set number of OMP threads to fit the number of available cpus, if applicable.
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} 
 
-srun Rscript ./CAM_lagTime.R 
+srun Rscript ./stats_1p.R
+srun Rscript ./stats_2p.R
+srun Rscript ./stats_3p.R
 

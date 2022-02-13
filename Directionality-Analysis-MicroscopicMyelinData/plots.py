@@ -116,7 +116,7 @@ Result_OriJ = pd.DataFrame(np.vstack(Result_OriJ))
 Result_OriJ.to_csv(path+'Result_OriJ_92.csv', index=False)
 
 
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_14/'
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_09/'
 csv_files = glob.glob(os.path.join(path, "*2p*.csv"))
 for i, file in enumerate(csv_files):
     name = file[101:-7]

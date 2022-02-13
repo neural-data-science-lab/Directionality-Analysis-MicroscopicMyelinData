@@ -45,11 +45,22 @@ bpnr_func <- function(sample, seed){
   beta2_4 <- fit$beta2[,4]
   beta2_5 <- fit$beta2[,5]
   model_fit <- fit(fit)[,1]
+  SAM <- matrix(0, nrow = 1,ncol=4)
+  bc <- matrix(0, nrow = 1,ncol=4)
+  AS <- matrix(0, nrow = 1,ncol=4)
+  SAM[1,1] = NISTradianTOdeg(mean_circ(fit$SAM))
+  SAM[1,2] = NISTradianTOdeg(mode_est_circ(fit$SAM))
+  SAM[1,3:4] = NISTradianTOdeg(hpd_est_circ(fit$SAM))
+  bc[1,1] = NISTradianTOdeg(mean_circ(fit$b.c))
+  bc[1,2] = NISTradianTOdeg(mode_est_circ(fit$b.c))
+  bc[1,3:4] = NISTradianTOdeg(hpd_est_circ(fit$b.c))
+  AS[1,1] = NISTradianTOdeg(mean_circ(fit$AS))
+  AS[1,2] = NISTradianTOdeg(mode_est_circ(fit$AS))
+  AS[1,3:4] = NISTradianTOdeg(hpd_est_circ(fit$AS))
   return(list(Intercept, sider, layerL4, layerL5, siderlayerL4, siderlayerL5, 
               layerL4layerL5, beta1_1, beta1_2, beta1_3, beta1_4, beta1_5, beta2_1, 
-              beta2_2, beta2_3, beta2_4, beta2_5, model_fit))
+              beta2_2, beta2_3, beta2_4, beta2_5, model_fit,SAM,bc, AS))
 }
-
 
 
 Nsim = 25
@@ -73,6 +84,10 @@ sample.beta2_3 <- matrix(0, nrow = Nsim,ncol=its)
 sample.beta2_4 <- matrix(0, nrow = Nsim,ncol=its)
 sample.beta2_5 <- matrix(0, nrow = Nsim,ncol=its)
 sample.fit <- matrix(0, nrow = Nsim,ncol=5)
+sample.SAM <- matrix(0, nrow = Nsim,ncol=4)
+sample.bc <- matrix(0, nrow = Nsim,ncol=4)
+sample.AS <- matrix(0, nrow = Nsim,ncol=4)
+
 for (i in 1:Nsim){
   seed <- seed+i
   sample <- sample_n(data, 7500)
@@ -95,7 +110,20 @@ for (i in 1:Nsim){
   sample.beta2_4[i,] <- new_params[16][[1]]
   sample.beta2_5[i,] <- new_params[17][[1]]
   sample.fit[i,] <- new_params[18][[1]]
+  sample.SAM[i,] <- new_params[19][[1]]
+  sample.bc[i,] <- new_params[20][[1]]
+  sample.AS[i,] <- new_params[21][[1]]
 }
+
+y = matrix(0, nrow = 3,ncol=4)
+y[1,] = colMeans(sample.SAM)
+y[2,] = colMeans(sample.bc)
+y[3,] = colMeans(sample.AS)
+
+s = matrix(0, nrow = 3,ncol=4)
+s[1,] = apply(sample.SAM, 2, sd)
+s[2,] = apply(sample.bc, 2, sd)
+s[3,] = apply(sample.AS, 2, sd)
 
 library(MASS)
 write.matrix(sample.Intercept, file="/ptmp/muellerg/bpnr3p_Intercept_VCx.csv")
@@ -116,6 +144,8 @@ write.matrix(sample.beta2_2, file="/ptmp/muellerg/bpnr3p_beta2_2_VCx.csv")
 write.matrix(sample.beta2_3, file="/ptmp/muellerg/bpnr3p_beta2_3_VCx.csv")
 write.matrix(sample.beta2_4, file="/ptmp/muellerg/bpnr3p_beta2_4_VCx.csv")
 write.matrix(sample.beta2_5, file="/ptmp/muellerg/bpnr3p_beta2_5_VCx.csv")
+write.matrix(y, file="/ptmp/muellerg/mean_y_VCx.csv")
+write.matrix(s, file="/ptmp/muellerg/std_y_VCx.csv")
 
 
 
