@@ -3,5 +3,5 @@
 *.png
 /preProject/.idea/
 
-/preProject/
-/pipeline_masterThesis/
+#/preProject/
+#/pipeline_masterThesis/
