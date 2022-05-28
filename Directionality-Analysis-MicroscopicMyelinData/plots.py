@@ -115,11 +115,11 @@ for i in sample:
 Result_OriJ = pd.DataFrame(np.vstack(Result_OriJ))
 Result_OriJ.to_csv(path+'Result_OriJ_92.csv', index=False)
 
-
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_09/'
-csv_files = glob.glob(os.path.join(path, "*2p*.csv"))
+##### stats 2p,  3p
+path = 'C:/Users/Gesine/Documents/ACx/'
+csv_files = glob.glob(os.path.join(path, "*3p*17.csv"))
 for i, file in enumerate(csv_files):
-    name = file[101:-7]
+    name = file[(len(path)+7):-7]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 
 I = pd.melt(pd.DataFrame(np.arctan2(beta2_1, beta1_1)))
@@ -161,8 +161,8 @@ rLB = ([np.deg2rad(sider[3].mean()),np.deg2rad(siderlayerL4[3].mean()),np.deg2ra
 rUB = ([np.deg2rad(sider[4].mean()),np.deg2rad(siderlayerL4[4].mean()),np.deg2rad(siderlayerL5[4].mean())])
 
 
-posteriorPlot (l23, path, '_14-2p', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
-posteriorPlot_side(l23, path, '_14-3p', lmean, lmedian, rmean, rmedian,lLB, lUB, rLB, rUB)
+posteriorPlot (l23, path, '_17-3p', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
+posteriorPlot_side(l23, path, '_09-3p', lmean, lmedian, rmean, rmedian,lLB, lUB, rLB, rUB)
 
 
 path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/y-component/'
@@ -202,51 +202,11 @@ plt.show()
 #plt.close()
 
 
-#################### graveyard: further plots ############################
-#### histogram + density plot
-fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
-sns.set(style="ticks")
-plt.xlim(-90, 90)
-sns.histplot(data=dat, x=dat[6], hue=dat[1], palette='colorblind', label="Combined", kde=True, bins = 90)
-ax1.set_ylabel('Density', fontsize=32)
-ax1.set_xlabel('Dominant direction (°)', fontsize=32)
-ax1.set_yticks([   0., 1000., 2000., 3000., 4000., 5000., 6000., 7000., 8000.,
-       9000.])
-ax1.set_yticklabels([])
-ax1.set_xticklabels(ax1.get_xticks(),size=28)
-handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["right","left"], fontsize = 32, loc = 'upper right')
-#ax1.legend().set_visible(False)
-plt.tight_layout()
-plt.show()
-plt.savefig(path + 'Stats_12-L2345-hist_20.png', dpi=200)
-plt.close()
-
-fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
-sns.set(style="ticks")
-plt.xlim(-90, 90)
-sns.histplot(data=dat, x=dat[6], hue=dat[0], palette='colorblind', label="Combined", kde=True, bins = 90)
-ax1.set_ylabel('Density', fontsize=32)
-ax1.set_yticks([    0.,  5000., 10000., 15000., 20000., 25000., 30000.])
-ax1.set_xlabel('Dominant direction (°)', fontsize=32)
-ax1.set_yticklabels([])
-ax1.set_xticklabels(ax1.get_xticks(),size=28)
-handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["17","14", "12", "09"], fontsize = 32, loc = 'upper right')
-#ax1.legend().set_visible(False)
-plt.tight_layout()
-plt.show()
-plt.savefig(path + 'Stats-L2345-hist_20.png', dpi=200)
-plt.close()
-
-###########correct for A-P swapped -> 14,17
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/AP-020222/'
-test['1'] = np.abs(test['1']-test['1'].max())
-
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/stats_14/'
-csv_files = glob.glob(os.path.join(path, "*1p*.csv"))
+### plots stats 1p
+path = 'C:/Users/Gesine/Documents/ACx/'
+csv_files = glob.glob(os.path.join(path, "*1p*17.csv"))
 for i, file in enumerate(csv_files):
-    name = file[101:-7]
+    name = file[(len(path)+7):-7]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 I = pd.melt(pd.DataFrame(np.arctan2(beta2_1, beta1_1)))
 I.insert(0,'Parameter', np.repeat('L2/3',250000))
@@ -291,6 +251,53 @@ ax.set_yticklabels([])
 ax.legend(['R','L'],title='Side', fontsize=28, title_fontsize=32, loc = 'upper right')
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'postDistr'+'_rand-1p'+'.png', dpi=200)
+plt.savefig(path + 'postDistr'+'_17-1p'+'.png', dpi=200)
 
+
+#################### further plots ############################
+#### histogram + density plot
+fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
+sns.set(style="ticks")
+plt.xlim(-90, 90)
+sns.histplot(data=dat, x=dat[6], hue=dat[1], palette='colorblind', label="Combined", kde=True, bins = 90)
+ax1.set_ylabel('Density', fontsize=32)
+ax1.set_xlabel('Dominant direction (°)', fontsize=32)
+ax1.set_yticks([   0., 1000., 2000., 3000., 4000., 5000., 6000., 7000., 8000.,
+       9000.])
+ax1.set_yticklabels([])
+ax1.set_xticklabels(ax1.get_xticks(),size=28)
+handles, _ = ax1.get_legend_handles_labels()
+plt.legend(handles, ["right","left"], fontsize = 32, loc = 'upper right')
+#ax1.legend().set_visible(False)
+plt.tight_layout()
+plt.show()
+plt.savefig(path + 'Stats_12-L2345-hist_20.png', dpi=200)
+plt.close()
+
+fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
+sns.set(style="ticks")
+plt.xlim(-90, 90)
+sns.histplot(data=dat, x=dat[6], hue=dat[0], palette='colorblind', label="Combined", kde=True, bins = 90)
+ax1.set_ylabel('Density', fontsize=32)
+ax1.set_yticks([    0.,  5000., 10000., 15000., 20000., 25000., 30000.])
+ax1.set_xlabel('Dominant direction (°)', fontsize=32)
+ax1.set_yticklabels([])
+ax1.set_xticklabels(ax1.get_xticks(),size=28)
+handles, _ = ax1.get_legend_handles_labels()
+plt.legend(handles, ["17","14", "12", "09"], fontsize = 32, loc = 'upper right')
+#ax1.legend().set_visible(False)
+plt.tight_layout()
+plt.show()
+plt.savefig(path + 'Stats-L2345-hist_20.png', dpi=200)
+plt.close()
+
+
+
+#### graveyard
+'''
+###########correct for A-P swapped -> 14,17
+path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/AP-020222/'
+test['1'] = np.abs(test['1']-test['1'].max())
+
+'''
 

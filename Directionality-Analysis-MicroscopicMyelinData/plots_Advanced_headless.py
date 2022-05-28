@@ -164,7 +164,7 @@ def plot_color2D_layerTonotopy(data, path_output, patch_size, side, hemisphere, 
 
 ################  MAIN
 pixel = 0.5417  # um per pixel
-side = [args.name + '_l_VCx', args.name + '_r_VCx']
+side = [args.name + '_l_ACx', args.name + '_r_ACx']
 patch_size = int(round(args.patch_size))
 method = ['Fiji_Directionality_', 'OrientationJ_']
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel  #layer in um / pixel
