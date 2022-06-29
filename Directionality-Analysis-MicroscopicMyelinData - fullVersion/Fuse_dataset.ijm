@@ -1,3 +1,6 @@
+// author: Gesine Müller
+// only Fuse dataset step of BigStitcher
+
 path = "/home/muellerg/nas/Gesine_Muellerg/PR012_11-53-16/";
 name = "PR012_11-53-16";
 

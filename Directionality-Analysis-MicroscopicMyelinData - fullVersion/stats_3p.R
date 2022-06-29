@@ -1,6 +1,5 @@
-' author: Gesine Müller; three explanatory variable (side: L/R, layers: L23, L4, L5, y-axis)
-  Statistics: bootstrapping from data, circular regression models on mice
-    individually, Sanity check: randomize data, Baysian plots, ...  '
+' Statistics: bootstrapping from data, circular regression models on mice 
+    individually, Sanity check: randomize data, Baysian plots, ... '
 
 library(dplyr)
 #library(ggplot2)

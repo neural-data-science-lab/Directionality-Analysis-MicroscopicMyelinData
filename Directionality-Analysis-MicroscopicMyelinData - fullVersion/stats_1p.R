@@ -1,5 +1,4 @@
-' author: Gesine Müller; only one explanatory variable (side: L/R)
-  Statistics: bootstrapping from data, circular regression models on mice
+' Statistics: bootstrapping from data, circular regression models on mice 
     individually, Sanity check: randomize data, Baysian plots, ... '
 
 library(dplyr)
