@@ -7,13 +7,13 @@ import glob
 
 #### 1. import files from Directionality anaylsis and set up Results table + allocate layer, etc
 #### construct a csv such that all result data is in one file -> add l/r and sampleID
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/'
+path = 'C:/Users/Gesine/Documents/ACx/'
 pixel = 0.5417
 layers = np.array([0, 58.5, 234.65, 302.25, 557.05])/pixel
 layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
 
 Result_Fiji = []
-sample = ['09','12','14','17']
+sample = ['09','12','14','14-2','17']
 side = ['l', 'r']
 for i in sample:
     for j in side:
@@ -29,13 +29,14 @@ for i in sample:
         data.insert(loc=2, column='layer', value=layer_stack)
         Result_Fiji.append(data)
 Result_Fiji = pd.DataFrame(np.vstack(Result_Fiji))
-Result_Fiji.to_csv(path+'Result_Fiji_37-2.csv', index=False)
+Result_Fiji.to_csv(path+'Result_Fiji_37-3.csv', index=False)
 
 
 ### 2. plot distributions
 patch_size = 37
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_37_0912141718/'
-Result_long = pd.read_csv(os.path.join(path, 'Result_Fiji_'+str(patch_size)+'.csv'))
+path = 'C:/Users/Gesine/Documents/ACx/'
+Result_long = pd.read_csv(os.path.join(path, 'Result_Fiji_'+str(patch_size)+'-3.csv'))
+dat = Result_long
 dat = Result_long[Result_long['2']!='L1']
 dat = dat[dat['2']!='L6']
 
@@ -61,45 +62,71 @@ plt.show()
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
 sns.set(style="ticks")
 plt.xlim(-90, 90)
-sns.histplot(data=dat, x=dat['6'], hue=dat['0'], palette='colorblind', kde=True, bins = 90)
-ax1.set_ylabel('Density', fontsize=28)
-ax1.set_xlabel('Dominant direction (°)', fontsize=28)
-#ax1.set_yticks(y)
-ax1.set_yticklabels(ax1.get_yticks(), size=22)
-ax1.set_xticklabels(ax1.get_xticks(),size=24)
-#handles, _ = ax1.get_legend_handles_labels()
-#plt.legend(handles, ["09","12","14","17"], fontsize = 28, loc = 'upper right')
+sns.histplot(data=dat, x=dat['6'], hue=dat['0'], palette='colorblind', label="Combined", kde=True, bins = 90)
+ax1.set_ylabel('Density', fontsize=32)
+ax1.set_yticks([   0., 1000., 2000., 3000., 4000., 5000., 6000., 7000.])
+ax1.set_xlabel('Dominant direction (°)', fontsize=32)
+ax1.set_yticklabels([   0., 1000., 2000., 3000., 4000., 5000., 6000., 7000.] ,size=28)
+ax1.set_xticklabels(ax1.get_xticks(),size=28)
+handles, _ = ax1.get_legend_handles_labels()
+plt.legend(handles, ["17", "14-2", "14", "12", "09"], fontsize = 32, loc = 'upper right')
 #ax1.legend().set_visible(False)
-ax1.legend(labels=["17","14","12","09"], title = '',
-           fontsize =24, loc = 'upper center')
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats-hist-20.png', dpi=200)
-plt.close()
+plt.savefig(path + 'Stats-hist-L2345-_20-2.png', dpi=200) #L2345-
+
+#### histogram compare with subsample of 7500
+dat = Result_long
+dat = dat[dat['0']==14]
+subdat = dat.sample(n = 7500)
+del subdat['0']
+subdat.insert(0, '0', 7500)
+df = pd.concat([dat, subdat], axis = 0)
+
+fig, (ax) = plt.subplots(1, 2, figsize=(20, 10))
+plt.xlim(-90, 90)
+sample = [14, 7500]
+d = ['14', 'subsample']
+for i in range(2):
+    data = df[df['0'] == sample[i]]
+    sns.set(style="ticks")
+    sns.histplot(ax=ax[i], data=data, x=data['6'], hue=data['0'], palette='colorblind', kde=True, bins=90)
+    ax[i].set_ylabel('Density', fontsize=32)
+    ax[i].set_xlabel('Dominant direction (°)', fontsize=32)
+    ax[i].set_xticklabels(ax[i].get_xticks(),size=28)
+    ax[i].set_yticklabels([])
+    ax[i].legend(title=d[i], fontsize=28, title_fontsize=32, loc='upper right')
+plt.tight_layout()
+plt.show()
+plt.savefig(path + 'Stats-hist-subsample14.png', dpi=200)
 
 ### histograms for individuals
+dat = Result_long
+dat = dat[dat['0']==142]
+dat = dat[dat['2']!='L1']
+dat = dat[dat['2']!='L6']
+
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 10))
 sns.set(style="ticks")
 plt.xlim(-90, 90)
-sns.histplot(data=dat, x=dat[6], hue=dat[1], palette='colorblind', label="Combined", kde=True, bins = 90)
+sns.histplot(data=dat, x=dat['6'], hue=dat['1'], palette='colorblind', label="Combined", kde=True, bins = 90)
 ax1.set_ylabel('Density', fontsize=32)
 ax1.set_xlabel('Dominant direction (°)', fontsize=32)
-ax1.set_yticks([   0., 1000., 2000., 3000., 4000., 5000., 6000., 7000., 8000.,
-       9000.])
-ax1.set_yticklabels([])
+ax1.set_yticks([   0.,  500., 1000., 1500., 2000., 2500., 3000., 3500.])
+ax1.set_yticklabels([   0.,  500., 1000., 1500., 2000., 2500., 3000., 3500.], size=28)
 ax1.set_xticklabels(ax1.get_xticks(),size=28)
 handles, _ = ax1.get_legend_handles_labels()
 plt.legend(handles, ["right","left"], fontsize = 32, loc = 'upper right')
 #ax1.legend().set_visible(False)
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_12-L2345-hist_20.png', dpi=200)
+plt.savefig(path + 'Stats_142-L2345-hist_20.png', dpi=200) #-L2345
 plt.close()
 
 ### comparison between samples
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_37_0912141718/'
-data_long = pd.read_csv(os.path.join(path, 'Result_Fiji_37.csv'))
-layer_ids = ['L1', 'L2/3', 'L4', 'L5', 'L6']
+dat = Result_long
+dat = dat[dat['2']!='L1']
+dat = dat[dat['2']!='L6']
 
 #Boxplot
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 8))
@@ -107,7 +134,7 @@ sns.set(style="ticks")
 ax1 = sns.boxplot(x="0", y="6", hue="1", data = dat, palette="Greys_r", width = 0.5)
 ax1.set_ylabel('Dominant direction (°)', fontsize=30)
 ax1.set_xlabel('Mouse sample ID', fontsize=30)
-ax1.set_xticklabels(['09', '12','14','17'],size=28)
+ax1.set_xticklabels(['09', '12','14','17', '14-2'],size=28)
 ax1.set_yticklabels(ax1.get_yticks().astype(int), size=28)
 handles, _ = ax1.get_legend_handles_labels()
 plt.legend(handles, ["left","right"], fontsize = 32, loc = 2, bbox_to_anchor=(1, 0.6))
@@ -123,13 +150,13 @@ ax1 = sns.pointplot(data=dat, x='0', y='6', hue='1', ci='sd', dodge=True, marker
                     capsize=.1)
 ax1.set_ylabel('Dominant direction (°)', fontsize=30)
 ax1.set_xlabel('Mouse sample ID', fontsize=30)
-ax1.set_xticklabels(['09', '12','14','17'],size=28)
+ax1.set_xticklabels(['09', '12','14','17', '14-2'],size=28)
 ax1.set_yticklabels(ax1.get_yticks().astype(int), size=28)
 handles, _ = ax1.get_legend_handles_labels()
 plt.legend(handles, ["left","right"], fontsize = 32, loc = 2, bbox_to_anchor=(1, 0.6))
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_sampleID-L2345-pointplot.png', dpi=200)#
+plt.savefig(path + 'Stats_sampleID-pointplot.png', dpi=200)#
 plt.close()
 
 
@@ -139,13 +166,13 @@ sns.set(style="ticks")
 ax1 = sns.violinplot(x="0", y="6", hue="1", data = dat, split=True, palette="colorblind", width = 0.5)
 ax1.set_ylabel('Dominant direction (°)', fontsize=24)
 ax1.set_xlabel('Mouse sample ID', fontsize=24)
-ax1.set_xticklabels(['09', '12','14','17'],size=20)
+ax1.set_xticklabels(['09', '12','14','17', '14-2'],size=20)
 ax1.set_yticklabels(ax1.get_yticks().astype(int), size=20)
 handles, _ = ax1.get_legend_handles_labels()
 plt.legend(handles, ["left","right"], fontsize = 24, loc = 2, bbox_to_anchor=(1, 0.6))
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'Stats_sampleID_L2345-violinplot.png', dpi=200)
+plt.savefig(path + 'Stats_sampleID-L2345-violinplot.png', dpi=200)
 plt.close()
 
 
@@ -154,7 +181,7 @@ plt.close()
 ###################################################################
 ### Statistics
 ### model fit
-path = 'C:/Users/Gesine/Documents/Studium/MasterCMS/MasterThesis/DataPC/Result_92_0912141718/fit/'
+path = 'C:/Users/Gesine/Documents/ACx/Stats/'
 csv_files = glob.glob(os.path.join(path, "*fit*.csv"))
 for i, file in enumerate(csv_files):
     name = file[len(path):-4]
@@ -163,7 +190,7 @@ for i, file in enumerate(csv_files):
 f = []
 for i in range(3):  #1p,2p,3p
     i+=1
-    for j in ['09','12','14','17']:
+    for j in ['09','12','14','14-2', '17', 'VCx', 'rand']:
         data=locals()['bpnr'+str(i)+'p_fit_'+j]
         fit = data[[1,3]]
         fit[1]= fit[1]-locals()['bpnr1p_fit_'+j][1].mean()
@@ -178,7 +205,7 @@ fit = pd.DataFrame(np.vstack(f))
 
 dat = fit[fit[2]=='DIC']
 
-color = ["#5790fc", "#e42536", "#f89c20", "#964a8b"] # , "#656364", "k"
+color = ["#5790fc", "#e42536", "#f89c20", "#964a8b", "#656364", "k", "gray"] # , "#656364", "k"
 fig, (ax1) = plt.subplots(1, 1, figsize=(12, 8))
 sns.set(style="ticks")
 ax1 = sns.pointplot(data=dat, x=1, y=3, hue=0, ci='sd',  palette=color, dodge=True)
@@ -188,7 +215,7 @@ ax1.set_xlabel('Model complexity', fontsize=24)
 ax1.set_xticklabels(['domDir ~ side', 'domDir ~ side+layer','domDir ~ side+layer+y'],size=20)
 ax1.set_yticklabels(ax1.get_yticks().astype(int), size=20)
 handles, _ = ax1.get_legend_handles_labels()
-plt.legend(handles, ["9","12", "14","17"], title='Sample', fontsize = 22, title_fontsize=24, loc = 'best')#, "Control I", "Control II"
+plt.legend(handles, ["9","12", "14", '14-2', '17', 'VCx', 'rand'], title='Sample', fontsize = 22, title_fontsize=24, loc = 'best')#, "Control I", "Control II"
 plt.tight_layout()
 plt.show()
 plt.savefig(path + 'modelFit.png', dpi=200)
@@ -228,10 +255,10 @@ def posteriorPlot (data, path, name, lmean, lmedian, rmean, rmedian,lLB, lUB, rL
 
 
 ### 1p
-path = 'C:/Users/Gesine/Documents/ACx/'
-csv_files = glob.glob(os.path.join(path, "*1p*17.csv"))
+path = 'C:/Users/Gesine/Documents/ACx/Stats/'
+csv_files = glob.glob(os.path.join(path, "*1p*rand.csv"))
 for i, file in enumerate(csv_files):
-    name = file[(len(path)+7):-7]
+    name = file[(len(path)+7):-9]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 I = pd.melt(pd.DataFrame(np.arctan2(beta2_1, beta1_1)))
 I.insert(0,'Parameter', np.repeat('L2/3',250000))
@@ -246,10 +273,10 @@ lmean = ([np.deg2rad(Intercept[0].mean())])
 lmedian = ([np.deg2rad(Intercept[1].mean())])
 lLB = ([np.deg2rad(Intercept[3].mean())])
 lUB = ([np.deg2rad(Intercept[4].mean())])
-rmean = ([np.deg2rad(side2[0].mean())])
-rmedian = ([np.deg2rad(side2[1].mean())])
-rLB = ([np.deg2rad(side2[3].mean())])
-rUB = ([np.deg2rad(side2[4].mean())])
+rmean = ([np.deg2rad(sider[0].mean())])
+rmedian = ([np.deg2rad(sider[1].mean())])
+rLB = ([np.deg2rad(sider[3].mean())])
+rUB = ([np.deg2rad(sider[4].mean())])
 
 i = 0
 fig, ax = plt.subplots(1, 1, figsize=(12, 10))
@@ -276,14 +303,14 @@ ax.set_yticklabels([])
 ax.legend(['R','L'],title='Side', fontsize=28, title_fontsize=32, loc = 'upper right')
 plt.tight_layout()
 plt.show()
-plt.savefig(path + 'postDistr'+'_17-1p'+'.png', dpi=200)
+plt.savefig(path + 'postDistr'+'_rand-1p'+'.png', dpi=200)
 
 
 ### 2/3p
-path = 'C:/Users/Gesine/Documents/ACx/'
-csv_files = glob.glob(os.path.join(path, "*3p*17.csv"))
+path = 'C:/Users/Gesine/Documents/ACx/Stats/'
+csv_files = glob.glob(os.path.join(path, "*3p*rand.csv"))
 for i, file in enumerate(csv_files):
-    name = file[(len(path)+7):-7]
+    name = file[(len(path)+7):-9]
     locals()[name] = pd.read_csv(file, header=None, delimiter=r"\s+")
 
 I = pd.melt(pd.DataFrame(np.arctan2(beta2_1, beta1_1)))
@@ -324,8 +351,18 @@ rmedian = ([np.deg2rad(sider[1].mean()),np.deg2rad(siderlayerL4[1].mean()),np.de
 rLB = ([np.deg2rad(sider[3].mean()),np.deg2rad(siderlayerL4[3].mean()),np.deg2rad(siderlayerL5[3].mean())])
 rUB = ([np.deg2rad(sider[4].mean()),np.deg2rad(siderlayerL4[4].mean()),np.deg2rad(siderlayerL5[4].mean())])
 
+lmean_std = ([np.deg2rad(Intercept[0].std()),np.deg2rad(layerL4[0].std()),np.deg2rad(layerL5[0].std())])
+lmedian_std = ([np.deg2rad(Intercept[1].std()),np.deg2rad(layerL4[1].std()),np.deg2rad(layerL5[1].std())])
+lLB_std = ([np.deg2rad(Intercept[3].std()),np.deg2rad(layerL4[3].std()),np.deg2rad(layerL5[3].std())])
+lUB_std = ([np.deg2rad(Intercept[4].std()),np.deg2rad(layerL4[4].std()),np.deg2rad(layerL5[4].std())])
 
-posteriorPlot (l23, path, '_17-3p', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
+rmean_std = ([np.deg2rad(sider[0].std()),np.deg2rad(siderlayerL4[0].std()),np.deg2rad(siderlayerL5[0].std())])
+rmedian_std = ([np.deg2rad(sider[1].std()),np.deg2rad(siderlayerL4[1].std()),np.deg2rad(siderlayerL5[1].std())])
+rLB_std = ([np.deg2rad(sider[3].std()),np.deg2rad(siderlayerL4[3].std()),np.deg2rad(siderlayerL5[3].std())])
+rUB_std = ([np.deg2rad(sider[4].std()),np.deg2rad(siderlayerL4[4].std()),np.deg2rad(siderlayerL5[4].std())])
+
+
+posteriorPlot (l23, path, '_rand-3p', lmean, lmedian, rmean, rmedian, lLB, lUB, rLB, rUB)
 
 
 
